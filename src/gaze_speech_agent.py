@@ -588,7 +588,7 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                 # person_name, filtered_gaze_data = gaze_manager.get_filtered_gaze_data(gaze_data, gaze_start_time)
                 excluded_objects = ['hand_left_robot', 'hand_right_robot']
                 person_name = 'Daniel'
-                gaze_history, objects_timestamps = pyGaze.compute_gaze_history_closest_object(gaze_data, gaze_start_time, 10.0,10.0, 10.0, excluded_objects, 5.0, 0.5)
+                gaze_history, objects_timestamps = pyGaze.compute_gaze_history_closest_object(gaze_data, gaze_start_time, 15.0,10.0, 8.0, excluded_objects, 5.0, 0.5)
 
                 # print("Gaze history: ", gaze_history)
                 # for entry in gazed_objects_timestamps:
@@ -669,9 +669,11 @@ def main():
     global gpt_responses_path
     global filtered_gaze_data_directory_path
     global gaze_directory_path
+    global plots_directory_path
     speech_directory_path = create_execution_folder("../../speechData", number_test)
     gpt_responses_path = create_execution_folder("../../gptResponses", number_test)
     gaze_directory_path = create_execution_folder("../../gazeData", number_test)
+    plots_directory_path = create_execution_folder("../../plots", number_test)
     filtered_gaze_data_directory_path = create_execution_folder("../../filteredGazeData", number_test)
 
     llm_handler = LLMHandler(config_module="gpt_gaze_speech_config")
@@ -709,7 +711,7 @@ def main():
 
                 if word_data and first_object_gaze_data:
                     pyGaze.plot_gaze_and_speech(first_object_gaze_data, word_data)
-                    plt.show()                   
+                    plt.savefig(plots_directory_path+"/plot_"+str(int(getWallclockTime()))+".png")
     except KeyboardInterrupt:
         print("\nInterrupted by user")
         if stream.running:

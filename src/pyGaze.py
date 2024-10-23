@@ -35,7 +35,7 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
         
         # If gaze veloity is high, exclude the object (unstable gaze)
         if entry['gaze_velocity'] > gaze_velocity_threshold:
-            print(f"High gaze velocity: {entry['gaze_velocity']}, so we exclude object: %s" % entry['objects'][0]['name'])
+            # print(f"High gaze velocity: {entry['gaze_velocity']}, so we exclude object: %s" % entry['objects'][0]['name'])
             
             # If we were previously gazing at an object, end the gaze segment
             if gaze_start_time is not None:
@@ -56,8 +56,8 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
                 current_object = None
             continue
 
-        print(f"Time: {current_time}")
-        print("Objects: ", entry['objects'])
+        # print(f"Time: {current_time}")
+        # print("Objects: ", entry['objects'])
 
         # Find the closest object that is not in the excluded list based on angle differences
         
@@ -66,13 +66,13 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
             if obj['name'] in excluded_objects:
                 print(f"Excluded object: {obj['name']}")
                 continue  # Skip excluded objects
-            print(f"Object: {obj['name']}, Angle Diff: {obj['angleDiff']}, Angle Diff XZ: {obj['angleDiffXZ']}, velocity: {entry['gaze_velocity']}")
+            # print(f"Object: {obj['name']}, Angle Diff: {obj['angleDiff']}, Angle Diff XZ: {obj['angleDiffXZ']}, velocity: {entry['gaze_velocity']}")
             # Check if the object satisfies the angle difference thresholds in both 3D and vertical plane
             
             if obj['angleDiff'] < angle_diff_threshold and obj['angleDiffXZ'] < angle_diff_xz_threshold and obj['name'] not in excluded_objects:
                 object_name = obj['name']
                 break  # Found a valid object, stop searching
-        print(f"Object: {object_name}")
+        # print(f"Object: {object_name}")
         
         if object_name == 'camera':
             object_name = 'Johnnie'
