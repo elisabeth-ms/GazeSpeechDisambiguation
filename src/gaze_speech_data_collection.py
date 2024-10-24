@@ -24,7 +24,7 @@ from pyAffaction import *
 import pyGaze
 
 gaze_start_time = -1.0
-
+speaking_user = "Elisabeth"
 # Cross-platform getch function to capture key presses
 def getch():
     """Get a single character from standard input without echo."""
@@ -152,33 +152,8 @@ class MicrophoneStream:
 
 
 class GazeDataManager:
-    def __init__(self, SIM, threshold_angle=10.0, threshold_gaze_vel=0.0025, objects_not_wanted=None):
+    def __init__(self, SIM):
         self.SIM = SIM
-        self.threshold_angle = threshold_angle
-        self.threshold_gaze_vel = threshold_gaze_vel
-        self.objects_not_wanted = objects_not_wanted
-
-    
-    # Setter for threshold_angle
-    def set_threshold_angle(self, threshold_angle):
-        if threshold_angle > 0:
-            self.threshold_angle = threshold_angle
-        else:
-            raise ValueError("Threshold angle must be positive")
-
-    # Setter for threshold_gaze_vel
-    def set_threshold_gaze_vel(self, threshold_gaze_vel):
-        if threshold_gaze_vel > 0:
-            self.threshold_gaze_vel = threshold_gaze_vel
-        else:
-            raise ValueError("Threshold gaze velocity must be positive")
-
-    # Setter for objects_not_wanted
-    def set_objects_not_wanted(self, objects_not_wanted):
-        if isinstance(objects_not_wanted, list):
-            self.objects_not_wanted = objects_not_wanted
-        else:
-            raise ValueError("Objects not wanted must be a list")
 
     def get_raw_gaze_data(self):
         return self.SIM.get_gaze_data()
@@ -207,13 +182,15 @@ def key_listener(stream, gaze_manager, transcription_queue, plot_speech_queue, p
                 stream.running = False
                 stream.processing_thread.join()  # Wait for transcription to finish
                 stream.stop_streaming()
-                raw_gaze_data = gaze_manager.get_raw_gaze_data()
+                all_users_raw_gaze_data = gaze_manager.get_raw_gaze_data()
                 excluded_objects = ['hand_left_robot', 'hand_right_robot']
-                gaze_history, objects_timestamps = pyGaze.compute_gaze_history_closest_object(raw_gaze_data, gaze_start_time, 30.0,12.0, 12.0, excluded_objects, 5.0, 0.5)
-                print("Gaze history: ", gaze_history)
-                for entry in objects_timestamps:
-                    print(f"Object: '{entry[0]}', start_time: {entry[1]:.2f}s, end_time: {entry[2]:.2f}s")
-                filename = f'{int(gaze_start_time)}_data.json'
+                for user_raw_gaze_data in all_users_raw_gaze_data:
+                    gaze_history, objects_timestamps = pyGaze.compute_gaze_history_closest_object(user_raw_gaze_data["gaze_data"], gaze_start_time, 30.0,12.0, 12.0, excluded_objects, 5.0, 0.5)
+                    print("Gaze history: ", gaze_history)
+                    for entry in objects_timestamps:
+                        print(f"Object: '{entry[0]}', start_time: {entry[1]:.2f}s, end_time: {entry[2]:.2f}s")
+                
+                foldername = f'{int(gaze_start_time)}_data'
 
                 while not transcription_queue.empty():
                     transcript, word_data = transcription_queue.get()
@@ -224,12 +201,16 @@ def key_listener(stream, gaze_manager, transcription_queue, plot_speech_queue, p
                         print(f"Word: '{word}', start_time: {start_time:.2f}s, end_time: {end_time:.2f}s")
                     # Save the speech data to a JSON file
                     global input_data_directory_path
-                    save_speech_data_to_json(input_data_directory_path+"/speech", filename, gaze_start_time, getWallclockTime(), transcript, word_data)
+                    os.makedirs(input_data_directory_path+"/speech/"+foldername, exist_ok=True)
+                    save_speech_data_to_json(input_data_directory_path+"/speech/"+foldername, speaking_user+".json", gaze_start_time, getWallclockTime(), transcript, word_data)
                     plot_speech_queue.put(word_data)
                 plot_gaze_queue.put(objects_timestamps)
-                save_gaze_data_to_json(input_data_directory_path+"/gaze", filename, raw_gaze_data, gaze_start_time)
+                for user_raw_gaze_data in all_users_raw_gaze_data:
+                    raw_gaze_data = user_raw_gaze_data["gaze_data"]
+                    os.makedirs(input_data_directory_path+"/gaze/"+foldername, exist_ok=True)
+                    save_gaze_data_to_json(input_data_directory_path+"/gaze/"+foldername, user_raw_gaze_data["agent_name"]+".json", raw_gaze_data, gaze_start_time)
                 json_transformations = SIM.get_recorded_transformations(gaze_start_time, getWallclockTime())
-                save_transformations_data_to_json(input_data_directory_path+"/transformations", filename, json_transformations)
+                save_transformations_data_to_json(input_data_directory_path+"/transformations", foldername, json_transformations)
             else:
                 print("\nNot streaming.")
         elif key == 'e':
@@ -319,7 +300,7 @@ def main():
     
     threshold_gaze_vel = 50.0 # deg/s
     threshold_angle = 10.0 # deg
-    objects_not_wanted = ['Johnnie', 'hand_left_robot', 'hand_right_robot', 'Daniel']
+    objects_not_wanted = ['Johnnie', 'hand_left_robot', 'hand_right_robot']
     setLogLevel(-1)
     global SIM
     SIM = LlmSim()
@@ -381,7 +362,7 @@ def main():
     plot_gaze_queue = queue.Queue()
     stream = MicrophoneStream(rate=args.sample_rate, hints_filename=args.hints, transcription_queue=transcription_queue)
     
-    gaze_manager = GazeDataManager(SIM=SIM, threshold_angle=threshold_angle, threshold_gaze_vel=threshold_gaze_vel, objects_not_wanted=objects_not_wanted)
+    gaze_manager = GazeDataManager(SIM=SIM)
 
     # Start key listener thread
     key_thread = threading.Thread(target=key_listener, args=(stream, gaze_manager, transcription_queue, plot_speech_queue, plot_gaze_queue))

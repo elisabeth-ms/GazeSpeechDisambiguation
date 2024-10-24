@@ -1,7 +1,8 @@
-# This script analyzes real-time gaze data to determine which object in the scene the user is focusing on.
-# It uses thresholds for gaze velocity, angle differences, and gaze duration to filter out unstable or unfocused gazes.
-# When the user's gaze remains on an object for a specified duration, the object is announced via speech output.
-# Objects like robot hands are excluded from the analysis to avoid irrelevant detections.
+# This script analyzes real-time gaze data to determine which object in the scene the user (user_name) is focusing on.
+# It uses thresholds for gaze velocity (gaze_velocity_threshold), angle differences (angle_diff_threshold and angle_diff_xz_threshold), 
+# and gaze duration (gaze_duration_threshold) to filter out unstable or unfocused gazes.
+# When the user's gaze remains on an object for a specified duration (gaze_duration_threshold), the object is announced via speech output.
+# Objects excluded (excluded_objects) from the analysis to avoid irrelevant detections.
 # The script continuously updates and speaks the name of the focused object as the user interacts with the scene.
 
 
@@ -54,57 +55,64 @@ def main():
     SIM.run()
     
     gaze_manager = GazeDataManager(SIM=SIM)
-    sleep_time = 0.2
+    sleep_time = 0.1
     gaze_start_time = None
     current_object = None
     
     gaze_velocity_threshold = 20
     angle_diff_threshold = 10 
     angle_diff_xz_threshold = 10
-    gaze_duration_threshold = 0.5
+    gaze_duration_threshold = 0.3
     already_said = False
     
     excluded_objects = ['hand_left_robot', 'hand_right_robot']
-    # Keep the main thread alive
+    
+    user_name = "Elisabeth"
+    
+    # If there are multiple users, we just speak the object name for the user specified in user_name
     try:
         while True:
             time.sleep(sleep_time)
-            gaze_data = gaze_manager.get_raw_gaze_data()
-            print(gaze)
-            for entry in gaze_data:
-                if entry['time'] >= gaze_data[-1]['time'] - sleep_time:
-                    # If gaze veloity is high, exclude the object (unstable gaze)
-                    if entry['gaze_velocity'] > gaze_velocity_threshold:
-                        current_object = None
-                        continue
-                    object_name = None  # Default
-                    for obj in entry['objects']:
-                        if obj['name'] in excluded_objects:
+            all_users_gaze_data = gaze_manager.get_raw_gaze_data()
+            
+            for user_gaze_data in all_users_gaze_data:
+                if user_gaze_data["agent_name"] != user_name:
+                    print("Skipping gaze data for user: ", user_gaze_data["agent_name"])
+                gaze_data = user_gaze_data["gaze_data"]
+                for entry in gaze_data:
+                    if entry['time'] >= gaze_data[-1]['time'] - sleep_time:
+                        # If gaze veloity is high, exclude the object (unstable gaze)
+                        if entry['gaze_velocity'] > gaze_velocity_threshold:
+                            current_object = None
                             continue
-                        if obj['angleDiff'] < angle_diff_threshold and obj['angleDiffXZ'] < angle_diff_xz_threshold:
-                            object_name = obj['name']
-                            break
-                    
-                    # Initialize the first object and gaze start time
-                    if current_object is None and gaze_start_time is None:
-                        current_object = object_name
-                        gaze_start_time = entry['time']
-                        continue  # Skip to the next iteration since we just initialized
-                    
-                    if current_object is not None:
-                        current_time = entry['time']
-                        gaze_duration = current_time - gaze_start_time
-                        if gaze_duration > gaze_duration_threshold and not already_said:
-                            speak(SIM, current_object)
-                            print("Object: ", current_object, " Duration: ", gaze_duration)
-                            already_said = True
-                            continue
-                    
-                    if object_name != current_object:
-                        current_time = entry['time']
-                        current_object = object_name
-                        gaze_start_time = current_time
-                        already_said = False
+                        object_name = None  # Default
+                        for obj in entry['objects']:
+                            if obj['name'] in excluded_objects:
+                                continue
+                            if obj['angle_diff'] < angle_diff_threshold and obj['angle_diffXZ'] < angle_diff_xz_threshold:
+                                object_name = obj['name']
+                                break
+                        
+                        # Initialize the first object and gaze start time
+                        if current_object is None and gaze_start_time is None:
+                            current_object = object_name
+                            gaze_start_time = entry['time']
+                            continue  # Skip to the next iteration since we just initialized
+                        
+                        if current_object is not None:
+                            current_time = entry['time']
+                            gaze_duration = current_time - gaze_start_time
+                            if gaze_duration > gaze_duration_threshold and not already_said:
+                                speak(SIM, current_object)
+                                print("Object: ", current_object, " Duration: ", gaze_duration)
+                                already_said = True
+                                continue
+                        
+                        if object_name != current_object:
+                            current_time = entry['time']
+                            current_object = object_name
+                            gaze_start_time = current_time
+                            already_said = False
 
             
     except KeyboardInterrupt:

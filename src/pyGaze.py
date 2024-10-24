@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import random
+
+
 def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_threshold=20.0, angle_diff_threshold=15.0,
                          angle_diff_xz_threshold=5.0, excluded_objects=[], off_target_velocity_threshold=5.0,
                          off_target_duration_threshold=0.5):
@@ -69,7 +71,7 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
             # print(f"Object: {obj['name']}, Angle Diff: {obj['angleDiff']}, Angle Diff XZ: {obj['angleDiffXZ']}, velocity: {entry['gaze_velocity']}")
             # Check if the object satisfies the angle difference thresholds in both 3D and vertical plane
             
-            if obj['angleDiff'] < angle_diff_threshold and obj['angleDiffXZ'] < angle_diff_xz_threshold and obj['name'] not in excluded_objects:
+            if obj['angle_diff'] < angle_diff_threshold and obj['angle_diffXZ'] < angle_diff_xz_threshold and obj['name'] not in excluded_objects:
                 object_name = obj['name']
                 break  # Found a valid object, stop searching
         # print(f"Object: {object_name}")
@@ -113,7 +115,106 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
         gaze_history.append((current_object, gaze_duration))
         objects_timestamps.append(
             (current_object, gaze_start_time, current_time))
+    
+    # Return the gaze history and object timestamps
+    return gaze_history, objects_timestamps
 
+def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_velocity_threshold=20.0, angle_diff_threshold=15.0,
+                         angle_diff_xz_threshold=5.0, excluded_objects=[], off_target_velocity_threshold=5.0,
+                         off_target_duration_threshold=0.5):
+
+    # List to store gaze history and object timestamps
+    gaze_history = []
+    objects_timestamps = []  
+    
+    # Variables to track the current object and gaze start time of the current object
+    current_objects = []
+    gaze_start_time = None
+
+    # Loop through the gaze data entries
+    for entry in gaze_data:
+        # Calculate the current time relative to the start time
+        current_time = entry['time'] - start_time
+        if current_time < 0:
+            continue  # Skip entries before the start time
+        
+        # If gaze veloity is high, exclude the object (unstable gaze)
+        if entry['gaze_velocity'] > gaze_velocity_threshold:
+            # print(f"High gaze velocity: {entry['gaze_velocity']}, so we exclude object: %s" % entry['objects'][0]['name'])
+            
+            # If we were previously gazing at an object, end the gaze segment
+            if gaze_start_time is not None:
+                gaze_duration = current_time - gaze_start_time
+                
+                if current_objects == ['off-target gaze'] and gaze_duration < off_target_duration_threshold:
+                    # Ignore short off-target gaze segments
+                    pass
+                elif not current_objects:
+                    pass
+                else:
+                    # Store in the object history and timestamps
+                    gaze_history.append((current_objects.copy(), gaze_duration))
+                    objects_timestamps.append(
+                        (current_objects.copy(), gaze_start_time, current_time))
+                
+                # Reset current object since we are no longer tracking a stable gaze
+                current_objects = []
+            continue
+
+
+        
+        valid_objects = []
+        for obj in entry['objects']:
+            if obj['name'] in excluded_objects:
+                continue  # Skip excluded objects
+            # print(f"Object: {obj['name']}, Angle Diff: {obj['angleDiff']}, Angle Diff XZ: {obj['angleDiffXZ']}, velocity: {entry['gaze_velocity']}")
+            # Check if the object satisfies the angle difference thresholds in both 3D and vertical plane
+            
+            if obj['angle_diff'] < angle_diff_threshold and obj['angle_diffXZ'] < angle_diff_xz_threshold and obj['name'] not in excluded_objects:
+                valid_objects.append(obj['name'])
+        # print(f"Object: {object_name}")
+        
+        # if object_name == 'camera':
+        #     object_name = 'Johnnie'
+
+        # If no valid object was chosen, but the gaze velocity is below the off-target threshold, mark it as off-target
+        if not valid_objects and entry['gaze_velocity'] < off_target_velocity_threshold:
+            valid_objects = ['off-target gaze']
+
+        # Initialize the first object and gaze start time
+        if not current_objects and not gaze_start_time:
+            current_objects = valid_objects.copy()
+            gaze_start_time = current_time
+            continue  # Skip to the next iteration since we just initialized
+
+        # If the current object being gazed at changes, finalize the previous gaze segment
+        if set(valid_objects) != set(current_objects):
+            print(f"Current Objects: {current_objects}, Valid Objects: {valid_objects}")
+            # Compute the time spent on the previous object
+            gaze_duration = current_time - gaze_start_time
+
+            if current_objects == ['off-target gaze'] and gaze_duration < off_target_duration_threshold:
+                # Ignore short off-target gaze segments
+                pass
+            elif not current_objects:
+                pass
+            else:
+                # Store in the object history and timestamps
+                gaze_history.append((current_objects.copy(), gaze_duration))
+                objects_timestamps.append(
+                    (current_objects.copy(), gaze_start_time, current_time))
+
+            # Switch to the new object and update the start time
+            current_objects = valid_objects.copy()
+            gaze_start_time = current_time  
+
+    # Handle the last object gazed at (after the loop ends)
+    if current_objects:
+        gaze_duration = current_time - gaze_start_time
+        gaze_history.append((current_objects.copy(), gaze_duration))
+        objects_timestamps.append(
+            (current_objects.copy(), gaze_start_time, current_time))
+    
     # Return the gaze history and object timestamps
     return gaze_history, objects_timestamps
 
@@ -207,14 +308,14 @@ def plot_angle_diff_over_time(gaze_data, start_time=0, end_time=None, angle_diff
     
     
     if angle_diff_mode == '3D':
-        selected_angle_diff = 'angleDiff'
-        selected_angle_diffs = 'angleDiffs'
+        selected_angle_diff = 'angle_diff'
+        selected_angle_diffs = 'angle_diffs'
     elif angle_diff_mode == 'XZ':
-        selected_angle_diff = 'angleDiffXZ'
-        selected_angle_diffs = 'angleDiffsXZ'
+        selected_angle_diff = 'angle_diffXZ'
+        selected_angle_diffs = 'angle_diffsXZ'
     elif angle_diff_mode == 'XY':
-        selected_angle_diff = 'angleDiffXY'
-        selected_angle_diffs = 'angleDiffsXY'
+        selected_angle_diff = 'angle_diffXY'
+        selected_angle_diffs = 'angle_diffsXY'
     else:
         raise ValueError(f"Invalid angle_diff_mode: {angle_diff_mode}. Position must be one of '3D', 'XZ', or 'XY'")
     # Initialize data dictionary for each object
@@ -301,3 +402,37 @@ def plot_gaze_and_speech(gazed_objects_timestamps, words_data):
     ax2.grid(True)
 
     plt.tight_layout()
+    
+def plot_multi_gaze_and_speech(gazed_objects_timestamps, words_data):
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)  # Two subplots, sharing the same x-axis
+
+    # Extract unique objects for the y-axis
+    unique_objects = list(set([obj for objs, _, _ in gazed_objects_timestamps for obj in objs]))
+    object_mapping = {obj: i for i, obj in enumerate(unique_objects)}
+
+    # Plot Gaze Data (Top subplot)
+    for objs, start_time, end_time in gazed_objects_timestamps:
+        for obj in objs:  # Now we loop over multiple objects in each segment
+            ax1.hlines(y=object_mapping[obj], xmin=start_time, xmax=end_time, label=obj, linewidth=5)
+
+    ax1.set_yticks(range(len(unique_objects)))
+    ax1.set_yticklabels(unique_objects)
+    ax1.set_ylabel('Gaze Objects')
+    ax1.set_title('Gaze Data Over Time')
+    ax1.grid(True)
+
+    # Plot Speech Data (Bottom subplot)
+    for i, (word, start_time, end_time) in enumerate(words_data):
+        print(f"Word: {word}, Start: {start_time}, End: {end_time}")
+        ax2.hlines(y=0, xmin=start_time, xmax=end_time, color=(random.random(), random.random(), random.random()), linewidth=6)
+        mid_time = (start_time + end_time) / 2
+        ax2.text(mid_time, 0, word, ha='center', va='center', fontsize=12, color='black')
+
+    ax2.set_xlabel('Time (seconds)')
+    ax2.set_ylabel('Speech')
+    ax2.set_title('Speech Word-level Timestamps')
+    ax2.grid(True)
+
+    plt.tight_layout()
+

@@ -105,65 +105,73 @@ def process_test_data(base_directory, test_number):
         return
 
     # Define directories for gaze and speech data
-    gaze_folder = os.path.join(test_folder, 'gaze')
-    speech_folder = os.path.join(test_folder, 'speech')
-    transformations_folder = os.path.join(test_folder, 'transformations')
+    test_gaze_folder = os.path.join(test_folder, 'gaze')
+    test_speech_folder = os.path.join(test_folder, 'speech')
+    test_transformations_folder = os.path.join(test_folder, 'transformations')
 
-    if not os.path.exists(gaze_folder) or not os.path.exists(speech_folder):
+    if not os.path.exists(test_gaze_folder) or not os.path.exists(test_speech_folder):
         print("Gaze or speech folder not found in the test folder.")
         return
 
-    # Get all JSON files in the gaze and speech folders
-    gaze_files = sorted(os.listdir(gaze_folder))
-    speech_files = sorted(os.listdir(speech_folder))
-    transformations_files = sorted(os.listdir(transformations_folder))
+    # Get all filenames in the gaze and speech folders
+    gaze_folders = sorted(os.listdir(test_gaze_folder))
+    speech_folders = sorted(os.listdir(test_speech_folder))
+    transformations_files = sorted(os.listdir(test_transformations_folder))
 
     # Filter JSON files
-    gaze_files = [f for f in gaze_files if f.endswith('.json')]
-    speech_files = [f for f in speech_files if f.endswith('.json')]
-    transformations_files = [f for f in transformations_files if f.endswith('.json')]
+    #gaze_files = [f for f in gaze_files if f.endswith('.json')]
+    #speech_files = [f for f in speech_files if f.endswith('.json')]
+    #transformations_files = [f for f in transformations_files if f.endswith('.json')]
 
     # Process corresponding gaze and speech files
-    for gaze_file, speech_file, transformations_file in zip(gaze_files, speech_files, transformations_files):
-        if gaze_file != speech_file or gaze_file != transformations_file:
-            print(f"Mismatch between gaze, speech, transformations file names: {gaze_file}, {speech_file} and {transformations_file}")
+    for gaze_folder, speech_folder, transformations_file in zip(gaze_folders, speech_folders, transformations_files):
+        if gaze_folder != speech_folder or gaze_folder != transformations_file:
+            print(f"Mismatch between gaze, speech, transformations file names: {gaze_folder}, {speech_folder} and {transformations_file}")
             continue
         
-        print(f"Processing: {gaze_file}")
-
+        print(f"Processing: {gaze_folder}")
+        
         # Read gaze and speech data
-        gaze_data = read_json_file(os.path.join(gaze_folder, gaze_file))
-        speech_data = read_json_file(os.path.join(speech_folder, speech_file))
-        sim.load_transformation_data_from_file(os.path.join(transformations_folder, transformations_file))
+        gaze_directory = os.path.join(test_gaze_folder, gaze_folder)
+        speech_directory = os.path.join(test_speech_folder, speech_folder)
+        for gaze_file in os.listdir(gaze_directory):
+            gaze_data = read_json_file(os.path.join(gaze_directory, gaze_file))
+            print("Gaze Data for user: ",gaze_file," ",gaze_data)
+            
+        for speech_file in os.listdir(speech_directory):
+            speech_data = read_json_file(os.path.join(speech_directory, speech_file))
+            print("Speech Data for user: ",speech_file," ",speech_data)
 
         
 
 
-        start_listening_time = speech_data['listening_start_time']
-        end_listening_time = speech_data['listening_end_time']
-        excluded_objects = ['hand_left_robot', 'hand_right_robot']
+            start_listening_time = speech_data['listening_start_time']
+            end_listening_time = speech_data['listening_end_time']
+            excluded_objects = ['hand_left_robot', 'hand_right_robot']
 
 
-        gaze_history, objects_timestamps = pyGaze.compute_gaze_history_closest_object(gaze_data, start_listening_time, 30.0,12.0, 12.0, excluded_objects, 5.0, 0.5)
-        print("Gaze History:", gaze_history)
-        # print("Filtered Gaze History:", filtered_gaze_history)
-
-        gaze_history = pyGaze.compute_multi_object_gaze_history(gaze_data, start_listening_time, 60.0, 20.0)
-        filtered_gaze_history = pyGaze.filter_multi_object_gaze_history(gaze_history, excluded_objects)
-        print("Multi-Object Gaze History:", gaze_history)
-        print("Filtered Multi-Object Gaze History:", filtered_gaze_history)
-        
-        print("speech_data: ", speech_data['transcript'])
-        # Extract relevant information and plot the data
-        words_data = json_to_words_data(speech_data)
-        pyGaze.plot_gaze_and_speech(objects_timestamps, words_data)
-        pyGaze.plot_angle_diff_over_time(gaze_data, start_listening_time, end_listening_time, '3D')
-        pyGaze.plot_angle_diff_over_time(gaze_data, start_listening_time, end_listening_time, 'XY')
-        pyGaze.plot_angle_diff_over_time(gaze_data, start_listening_time, end_listening_time, 'XZ')
-        pyGaze.plot_gaze_velocity_over_time(gaze_data, start_listening_time, end_listening_time)
-
-        sim.start_playback_transformation_data()
-        plt.show()
+            gaze_history, objects_timestamps = pyGaze.compute_gaze_history_closest_object(gaze_data, start_listening_time, 30.0,12.0, 12.0, excluded_objects, 5.0, 0.5)
+            print("Gaze History:", gaze_history)
+            
+            multi_object_gaze_history, multi_objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(gaze_data, start_listening_time, 30.0,12.0, 12.0, excluded_objects, 5.0, 0.5)
+            print("Multi-Object Gaze History1:", multi_object_gaze_history)  
+            # gaze_history = pyGaze.compute_multi_object_gaze_history(gaze_data, start_listening_time, 60.0, 20.0)
+            # filtered_gaze_history = pyGaze.filter_multi_object_gaze_history(gaze_history, excluded_objects)
+            # print("Filtered Multi-Object Gaze History:", filtered_gaze_history)
+            
+            print("speech_data: ", speech_data['transcript'])
+            # Extract relevant information and plot the data
+            words_data = json_to_words_data(speech_data)
+            pyGaze.plot_multi_gaze_and_speech(multi_objects_timestamps, words_data)
+            # pyGaze.plot_gaze_and_speech(objects_timestamps, words_data)
+            pyGaze.plot_angle_diff_over_time(gaze_data, start_listening_time, end_listening_time, '3D')
+            # pyGaze.plot_angle_diff_over_time(gaze_data, start_listening_time, end_listening_time, 'XY')
+            # pyGaze.plot_angle_diff_over_time(gaze_data, start_listening_time, end_listening_time, 'XZ')
+            # pyGaze.plot_gaze_velocity_over_time(gaze_data, start_listening_time, end_listening_time)
+            
+        # sim.load_transformation_data_from_file(os.path.join(test_transformations_folder, transformations_file))
+        # sim.start_playback_transformation_data()
+            plt.show()
 
         replay = True
         while replay:

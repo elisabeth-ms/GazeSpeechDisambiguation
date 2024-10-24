@@ -584,13 +584,18 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                 stream.running = False
                 stream.processing_thread.join()  # Wait for transcription to finish
                 stream.stop_streaming()
-                gaze_data = gaze_manager.get_raw_gaze_data()
+                all_users_raw_gaze_data = gaze_manager.get_raw_gaze_data()
                 # person_name, filtered_gaze_data = gaze_manager.get_filtered_gaze_data(gaze_data, gaze_start_time)
                 excluded_objects = ['hand_left_robot', 'hand_right_robot']
-                person_name = 'Daniel'
-                gaze_history, objects_timestamps = pyGaze.compute_gaze_history_closest_object(gaze_data, gaze_start_time, 15.0,10.0, 8.0, excluded_objects, 5.0, 0.5)
+                person_name = 'Elisabeth'
+                for user_raw_gaze_data in all_users_raw_gaze_data:
+                    if user_raw_gaze_data["agent_name"] != person_name:
+                        print("Skipping gaze data for user: ", user_raw_gaze_data["agent_name"])
+                        continue
+                    #gaze_history, objects_timestamps = pyGaze.compute_gaze_history_closest_object(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,10.0, 8.0, excluded_objects, 5.0, 0.5)
+                    gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,8.0, 8.0, excluded_objects, 5.0, 0.5)
 
-                # print("Gaze history: ", gaze_history)
+                # print("Gaze history: ", gaze_history) 
                 # for entry in gazed_objects_timestamps:
                 #     print(f"Object: '{entry[0]}', start_time: {entry[1]:.2f}s, end_time: {entry[2]:.2f}s")
 
@@ -608,7 +613,7 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                     global gaze_directory_path
                     save_speech_data_to_json(speech_directory_path,speech_file_name, gaze_start_time, getWallclockTime(), transcript, word_data)
                     plot_speech_queue.put(word_data)
-                    save_gaze_data_to_json(gaze_directory_path, gaze_data_file_name, gaze_data, gaze_start_time)
+                    save_gaze_data_to_json(gaze_directory_path, gaze_data_file_name, user_raw_gaze_data["gaze_data"], gaze_start_time)
 
                 plot_gaze_queue.put(objects_timestamps)
                 if transcript and gaze_history:
@@ -710,7 +715,7 @@ def main():
                     first_object_gaze_data = plot_gaze_queue.get()
 
                 if word_data and first_object_gaze_data:
-                    pyGaze.plot_gaze_and_speech(first_object_gaze_data, word_data)
+                    pyGaze.plot_multi_gaze_and_speech(first_object_gaze_data, word_data)
                     plt.savefig(plots_directory_path+"/plot_"+str(int(getWallclockTime()))+".png")
     except KeyboardInterrupt:
         print("\nInterrupted by user")
