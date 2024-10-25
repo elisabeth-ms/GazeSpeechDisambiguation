@@ -59,7 +59,7 @@ from pyAffaction import (
     setLogLevel,
 )
 
-
+recordTransformationsEnabled = True
 addResourcePath(CFG_ROOT_DIR)
 addResourcePath(CFG_DIR)
 print(f"{CFG_DIR=}")
@@ -74,8 +74,8 @@ SIMULATION.verbose = False
 SIMULATION.saveGazeData = True
 SIMULATION.maxGazeAngleDiff = 120.0
 SIMULATION.saveGazeData = True
-SIMULATION.playTransformations = True
-SIMULATION.recordTransformations = True
+SIMULATION.playTransformations = False
+SIMULATION.recordTransformations = recordTransformationsEnabled
 SIMULATION.xmlFileName = "g_example_cola_orange_juice_two_glasses_bowl_ice.xml"
 SIMULATION.init(True)
 SIMULATION.addTTS("native")

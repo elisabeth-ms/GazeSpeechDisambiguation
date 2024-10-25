@@ -72,6 +72,76 @@ def getch():
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
+# Create the main folder for interaction recordings and return its path
+def create_interaction_recordings(main_dir_path):
+    if not os.path.exists(main_dir_path):
+        os.makedirs(main_dir_path)
+    return os.path.abspath(main_dir_path)
+
+
+# Create a dialogue folder 
+def create_dialogue_folder(main_dir_path, dialogue_number):
+    dialogue_folder = os.path.join(main_dir_path, f'dialogue{dialogue_number}')
+    if not os.path.exists(dialogue_folder):
+        os.makedirs(dialogue_folder)
+        return dialogue_folder
+    else:
+        return None
+
+def create_interaction_folder(dialogue_dir_path,dialogue_number, interaction_number):
+    print("dialogue_dir_path: ", dialogue_dir_path)
+    print("dialogue_number: ", dialogue_number)
+    print("interaction_number: ", interaction_number)
+    interaction_dir_path = os.path.join(dialogue_dir_path, f'dialogue{dialogue_number}_{interaction_number}')
+    print("interaction_dir_path: ", interaction_dir_path)
+    if not os.path.exists(interaction_dir_path):
+        os.makedirs(interaction_dir_path)
+        return interaction_dir_path
+    else:
+        return None
+
+# Create raw_gaze_data and speech_data folders with files per user
+def save_raw_gaze_data(interaction_folder_path, all_users_raw_gaze_data):
+    raw_gaze_data_folder = os.path.join(interaction_folder_path, 'raw_gaze_data')
+
+    os.makedirs(raw_gaze_data_folder, exist_ok=True)
+
+    for user_raw_gaze_data in all_users_raw_gaze_data:
+        user_name = user_raw_gaze_data["agent_name"]
+        raw_gaze_data_file = os.path.join(raw_gaze_data_folder, f'{user_name}.json')
+        with open(raw_gaze_data_file, 'w') as f:
+            json.dump(user_raw_gaze_data, f, indent=4)
+            
+def save_speech_data(interaction_folder_path,user_name, press_s_time, press_f_time, transcript, word_data):
+    speech_data_folder = os.path.join(interaction_folder_path, 'speech_data')
+    os.makedirs(speech_data_folder, exist_ok=True)
+
+    # Create a structured dictionary with all the necessary data
+    data = {
+        "listening_start_time": press_s_time,
+        "listening_end_time": press_f_time,
+        "transcript": transcript,
+        "words": [
+            {
+                "word": word,
+                "start_time": start_time,
+                "end_time": end_time
+            } for word, start_time, end_time in word_data
+        ]
+    }
+    
+    speech_data_file = os.path.join(speech_data_folder, f'{user_name}.json')
+
+    # Save the data to a JSON file
+    with open(speech_data_file, 'w') as f:
+        json.dump(data, f, indent=4)
+        
+def save_transformations_data_to_json(directory, file_name, json_transformations):
+    # Save the raw gaze data to a JSON file
+    with open(directory+"/"+file_name, 'w') as f:
+        json.dump(json_transformations, f, indent=4)
+
+
 class MicrophoneStream:
     def __init__(self, rate=16000, chunk_size=1600, hints_filename=None, transcription_queue=None):
         self.rate = rate
@@ -186,58 +256,6 @@ class MicrophoneStream:
             # print("\n" + "-"*40)
 
 
-
-
-
-
-
-
-def plot_closest_objects(first_object_data):
-    filtered_data = [(time, obj) for time, obj, dist, vel in first_object_data if obj is not None]
-
-    unique_objects = list(set(obj for _, obj in filtered_data))
-
-    object_mapping = {obj: i for i, obj in enumerate(unique_objects)}
-
-    plt.figure(figsize=(10, 6))
-
-    for obj in unique_objects:
-        obj_times = [time for time, obj_name in filtered_data if obj_name == obj]
-        obj_indices = [object_mapping[obj]] * len(obj_times)  
-
-        plt.scatter(obj_times, obj_indices, label=obj, s=20)
-
-    # Customize plot
-    plt.yticks(list(object_mapping.values()), list(object_mapping.keys()))  
-    plt.xlabel("Time")
-    plt.ylabel("Objects")
-    plt.title("Closest Object to Gaze Over Time")
-    plt.legend()
-    plt.grid(True)
-
-
-
-def plot_word_timestamps(word_data):
-    fig, ax = plt.subplots(figsize=(10, 2))  # Set a shorter height to make it a single horizontal bar
-    
-    # Plot each word on the same line (y=0)
-    for i, (word, start_time, end_time) in enumerate(word_data):
-        # Draw a horizontal line (same y=0 for all)
-        ax.hlines(y=0, xmin=start_time, xmax=end_time, color=(random.random(), random.random(), random.random()), linewidth=8)
-        
-        # Add the word as text, placed at the middle of the line
-        mid_time = (start_time + end_time) / 2
-        ax.text(mid_time, 0, word, ha='center', va='center', fontsize=12, color='black')
-
-    # Customize the plot
-    ax.set_yticks([])  # Remove y-ticks
-    ax.set_yticklabels([])  # Remove y-axis labels
-    ax.set_ylim(-1, 1)  # Set y-limits to keep everything on one line
-    ax.set_xlabel('Time (seconds)')
-    ax.set_title('Word-level Timestamps')
-    ax.grid(False)  # Turn off grid lines
-
-
     
 def create_execution_folder(directory, test_number):
     """
@@ -259,26 +277,11 @@ def create_execution_folder(directory, test_number):
     print(f"Created folder: {new_folder}")
     return new_folder
 
+
+
 class GazeDataManager:
-    def __init__(self, threshold_angle=10.0, threshold_gaze_vel=0.0025, objects_not_wanted=None):
-        self.threshold_angle = threshold_angle
-        self.threshold_gaze_vel = threshold_gaze_vel
-        self.objects_not_wanted = objects_not_wanted
-
-    
-    # Setter for threshold_angle
-    def set_threshold_angle(self, threshold_angle):
-        if threshold_angle > 0:
-            self.threshold_angle = threshold_angle
-        else:
-            raise ValueError("Threshold angle must be positive")
-
-    # Setter for threshold_gaze_vel
-    def set_threshold_gaze_vel(self, threshold_gaze_vel):
-        if threshold_gaze_vel > 0:
-            self.threshold_gaze_vel = threshold_gaze_vel
-        else:
-            raise ValueError("Threshold gaze velocity must be positive")
+    def __init__(self, SIM):
+        self.SIM = SIM
 
     # Setter for objects_not_wanted
     def set_objects_not_wanted(self, objects_not_wanted):
@@ -287,49 +290,8 @@ class GazeDataManager:
         else:
             raise ValueError("Objects not wanted must be a list")
 
-    def get_raw_gaze_data(self):
-        global SIM
-        return SIM.get_gaze_data()
-
-    def get_filtered_gaze_data(self, gaze_data, start_time):
-        first_object_data = []
-        for data_point in gaze_data:
-            person_name = data_point.get("agent_name")
-            current_time = data_point.get("time")
-            current_gaze_vel = data_point.get("gaze_velocity")
-
-            if current_time >= start_time:
-            
-                objects = data_point.get("objects", [])        
-                if objects:
-
-                    # Initialize with the first object
-                    selected_object_name = objects[0].get("name")
-                    selected_object_angle_diff = objects[0].get("angleDiff")
-                    selected_object_distance = objects[0].get("distance")
-                    if selected_object_angle_diff> 20:
-                        continue
-                    # Iterate over the rest of the objects
-                    for i in range(1, len(objects)):
-                        current_object_name = objects[i].get("name")
-                        current_object_angle_diff = objects[i].get("angleDiff")
-                        current_object_distance = objects[i].get("distance")
-
-                        # Check if the angle difference is below the threshold
-                        if abs(selected_object_angle_diff - current_object_angle_diff) < self.threshold_angle and selected_object_name in self.objects_not_wanted:
-                            # If the current object is closer, update the selected object
-                            if current_object_distance < selected_object_distance:
-                                selected_object_name = current_object_name
-                                selected_object_angle_diff = current_object_angle_diff
-                                selected_object_distance = current_object_distance
-                            
-                    if selected_object_name == 'camera':
-                        selected_object_name = 'Johnnie'
-
-                    if current_gaze_vel <= self.threshold_gaze_vel:
-                        first_object_data.append((current_time-start_time, selected_object_name, selected_object_angle_diff, current_gaze_vel))
-        return person_name, first_object_data
-    
+    def get_all_users_raw_gaze_data(self):
+        return self.SIM.get_gaze_data()
 
 
 
@@ -343,6 +305,9 @@ class LLMHandler:
         }
         global SIM
         SIM = tool_module.SIMULATION
+        
+        global recordTransformationsEnabled
+        recordTransformationsEnabled = tool_module.recordTransformationsEnabled
 
         # LLM settings
         if not os.path.isfile(os.getenv("OPENAI_API_KEY")):
@@ -492,25 +457,6 @@ class LLMHandler:
         return self.messages
 
 
-def save_speech_data_to_json(directory,file_name, press_s_time, press_f_time, transcript, word_data):
-    # Create a structured dictionary with all the necessary data
-    data = {
-        "listening_start_time": press_s_time,
-        "listening_end_time": press_f_time,
-        "transcript": transcript,
-        "words": [
-            {
-                "word": word,
-                "start_time": start_time,
-                "end_time": end_time
-            } for word, start_time, end_time in word_data
-        ]
-    }
-
-    # Save the data to a JSON file
-    with open(directory+"/"+file_name, 'w') as f:
-        json.dump(data, f, indent=4)
-
 
 def chat_message_to_dict(message):
     """
@@ -584,9 +530,10 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                 stream.running = False
                 stream.processing_thread.join()  # Wait for transcription to finish
                 stream.stop_streaming()
-                all_users_raw_gaze_data = gaze_manager.get_raw_gaze_data()
+                all_users_raw_gaze_data = gaze_manager.get_all_users_raw_gaze_data()
                 # person_name, filtered_gaze_data = gaze_manager.get_filtered_gaze_data(gaze_data, gaze_start_time)
                 excluded_objects = ['hand_left_robot', 'hand_right_robot']
+                
                 person_name = 'Elisabeth'
                 for user_raw_gaze_data in all_users_raw_gaze_data:
                     if user_raw_gaze_data["agent_name"] != person_name:
@@ -609,11 +556,26 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                     
                     speech_file_name = f'speech_data_{int(getWallclockTime())}.json'
                     gaze_data_file_name = f'gaze_data_{int(getWallclockTime())}.json'
-                    global speech_directory_path
-                    global gaze_directory_path
-                    save_speech_data_to_json(speech_directory_path,speech_file_name, gaze_start_time, getWallclockTime(), transcript, word_data)
+                    
+                    # Lets create an interaction folder
+                    global interaction_folder_path
+                    global interaction_number
+                    global dialogue_number
+                    global dialogue_folder_path
+                    interaction_folder_path = create_interaction_folder(dialogue_folder_path,dialogue_number, interaction_number)
+                    interaction_number += 1
+                    save_raw_gaze_data(interaction_folder_path, all_users_raw_gaze_data)
+                    save_speech_data(interaction_folder_path, person_name, gaze_start_time, getWallclockTime(), transcript, word_data)
+                   
+                    global recordTransformationsEnabled
+                    if recordTransformationsEnabled:
+                        json_transformations = SIM.get_recorded_transformations(gaze_start_time, getWallclockTime())
+                        save_transformations_data_to_json(interaction_folder_path, 'transformations.json', json_transformations)
+                    #global speech_directory_path
+                    #global gaze_directory_path
+                    #save_speech_data_to_json(speech_directory_path,speech_file_name, gaze_start_time, getWallclockTime(), transcript, word_data)
                     plot_speech_queue.put(word_data)
-                    save_gaze_data_to_json(gaze_directory_path, gaze_data_file_name, user_raw_gaze_data["gaze_data"], gaze_start_time)
+                    #save_gaze_data_to_json(gaze_directory_path, gaze_data_file_name, user_raw_gaze_data["gaze_data"], gaze_start_time)
 
                 plot_gaze_queue.put(objects_timestamps)
                 if transcript and gaze_history:
@@ -623,10 +585,9 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                     llm_handler.play_with_functions(speech_input=transcript, gaze_history=gaze_history, person_name=person_name)
                     response = llm_handler.get_response()
                     # Save interaction data (speech input, gaze input, and GPT responses)
-                    interaction_file_name = f'interaction_data_{int(getWallclockTime())}.json'
-                    global gpt_responses_path
-                    save_interaction_data_to_json(gpt_responses_path,interaction_file_name, transcript, gaze_history, response)
+                    save_interaction_data_to_json(interaction_folder_path,"interaction_data.json", transcript, gaze_history, response)
                     print("response: ", response)
+
 
             else:
                 print("\nNot streaming.")
@@ -648,7 +609,23 @@ SIM = None
 speech_directory_path = None
 gpt_responses_path = None
 filtered_gaze_data_directory_path = None
-number_test =16
+recordTransformationsEnabled = None
+
+main_dir = 'interaction_recordings'
+main_dir_path = os.path.join('/hri/storage/user/emenende', main_dir)
+
+dialogue_number = 0
+dialogue_folder_path = None
+
+interaction_number = 1
+interaction_folder_path = None
+
+main_dir_path = create_interaction_recordings(main_dir_path)
+while dialogue_folder_path is None:
+    dialogue_number += 1
+    dialogue_folder_path = create_dialogue_folder(main_dir_path, dialogue_number)
+print(f"Dialogue folder path: {dialogue_folder_path}")
+
 def main():
     # Create a command-line parser.
     parser = argparse.ArgumentParser(description="Google Cloud Speech-to-Text streaming with word-level timestamps.")
@@ -669,17 +646,19 @@ def main():
     threshold_gaze_vel = 0.0025
     threshold_angle = 10.0 # deg
     objects_not_wanted = ['Johnnie', 'hand_left_robot', 'hand_right_robot', 'Daniel']
-    global number_test
-    global speech_directory_path
-    global gpt_responses_path
-    global filtered_gaze_data_directory_path
-    global gaze_directory_path
-    global plots_directory_path
-    speech_directory_path = create_execution_folder("../../speechData", number_test)
-    gpt_responses_path = create_execution_folder("../../gptResponses", number_test)
-    gaze_directory_path = create_execution_folder("../../gazeData", number_test)
-    plots_directory_path = create_execution_folder("../../plots", number_test)
-    filtered_gaze_data_directory_path = create_execution_folder("../../filteredGazeData", number_test)
+    
+
+    # global number_test
+    # global speech_directory_path
+    # global gpt_responses_path
+    # global filtered_gaze_data_directory_path
+    # global gaze_directory_path
+    # global plots_directory_path
+    # speech_directory_path = create_execution_folder("../../speechData", number_test)
+    # gpt_responses_path = create_execution_folder("../../gptResponses", number_test)
+    # gaze_directory_path = create_execution_folder("../../gazeData", number_test)
+    # plots_directory_path = create_execution_folder("../../plots", number_test)
+    # filtered_gaze_data_directory_path = create_execution_folder("../../filteredGazeData", number_test)
 
     llm_handler = LLMHandler(config_module="gpt_gaze_speech_config")
     transcription_queue = queue.Queue()  # Shared queue to hold transcriptions
@@ -687,16 +666,15 @@ def main():
     plot_gaze_queue = queue.Queue()
     plot_diagrams = True
     stream = MicrophoneStream(rate=args.sample_rate, hints_filename=args.hints, transcription_queue=transcription_queue)
-    
-    gaze_manager = GazeDataManager(threshold_angle=threshold_angle, threshold_gaze_vel=threshold_gaze_vel, objects_not_wanted=objects_not_wanted)
+    global SIM
+    gaze_manager = GazeDataManager(SIM)
 
     # Start key listener thread
     key_thread = threading.Thread(target=key_listener, args=(llm_handler,stream, gaze_manager, transcription_queue, plot_speech_queue, plot_gaze_queue, True))
     key_thread.daemon = True
     key_thread.start()
-    global SIM
 
-    SIM.save_gaze_data_to_file("../../gazeData/","test"+str(number_test)+".csv")
+    # SIM.save_gaze_data_to_file("../../gazeData/","test"+str(number_test)+".csv")
     SIM.run()
 
     # Keep the main thread alive
@@ -716,7 +694,8 @@ def main():
 
                 if word_data and first_object_gaze_data:
                     pyGaze.plot_multi_gaze_and_speech(first_object_gaze_data, word_data)
-                    plt.savefig(plots_directory_path+"/plot_"+str(int(getWallclockTime()))+".png")
+                    global interaction_folder_path
+                    plt.savefig(interaction_folder_path+"/plot.png")
     except KeyboardInterrupt:
         print("\nInterrupted by user")
         if stream.running:
