@@ -54,7 +54,7 @@ IMPORTANT: Obey the following rules:
 6. Disambiguate gaze with speech by inferring intent from gaze patterns when verbal requests are unclear.
 8. Provide a reason for every response to user requests using the 'reasoning' function to explain decisions. Be concise and clear.
 9. Speak out loud using the 'speak' function to communicate clearly and concisely with the user.
-
+10. Do not infer the content of objects based solely on assumptions or previous reasoning. Only infer object content if it has been explicitly mentioned by the user.
 """
 
 # Agent capabilities
