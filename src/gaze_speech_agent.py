@@ -532,15 +532,15 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                 stream.stop_streaming()
                 all_users_raw_gaze_data = gaze_manager.get_all_users_raw_gaze_data()
                 # person_name, filtered_gaze_data = gaze_manager.get_filtered_gaze_data(gaze_data, gaze_start_time)
-                excluded_objects = ['hand_left_robot', 'hand_right_robot']
+                excluded_objects = ['hand_left_robot', 'hand_right_robot', 'camera']
                 
                 person_name = 'Elisabeth'
                 for user_raw_gaze_data in all_users_raw_gaze_data:
                     if user_raw_gaze_data["agent_name"] != person_name:
-                        print("Skipping gaze data for user: ", user_raw_gaze_data["agent_name"])
+                        # print("Skipping gaze data for user: ", user_raw_gaze_data["agent_name"])
                         continue
                     #gaze_history, objects_timestamps = pyGaze.compute_gaze_history_closest_object(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,10.0, 8.0, excluded_objects, 5.0, 0.5)
-                    gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,8.0, 8.0, excluded_objects, 5.0, 0.5)
+                    gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,10.0, 10.0, excluded_objects, 5.0, 0.5)
 
                 # print("Gaze history: ", gaze_history) 
                 # for entry in gazed_objects_timestamps:
@@ -550,9 +550,9 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                     transcript, word_data = transcription_queue.get()
 
                     print(f"Received Transcription: {transcript}")
-                    print("Word-level timestamps:")
-                    for word, start_time, end_time in word_data:
-                        print(f"Word: '{word}', start_time: {start_time:.2f}s, end_time: {end_time:.2f}s")
+                    # print("Word-level timestamps:")
+                    # for word, start_time, end_time in word_data:
+                    #     print(f"Word: '{word}', start_time: {start_time:.2f}s, end_time: {end_time:.2f}s")
                     
                     speech_file_name = f'speech_data_{int(getWallclockTime())}.json'
                     gaze_data_file_name = f'gaze_data_{int(getWallclockTime())}.json'
@@ -586,7 +586,7 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                     response = llm_handler.get_response()
                     # Save interaction data (speech input, gaze input, and GPT responses)
                     save_interaction_data_to_json(interaction_folder_path,"interaction_data.json", transcript, gaze_history, response)
-                    print("response: ", response)
+                    # print("response: ", response)
 
 
             else:

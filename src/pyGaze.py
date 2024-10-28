@@ -130,6 +130,7 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
     # Variables to track the current object and gaze start time of the current object
     current_objects = []
     gaze_start_time = None
+    angle_diff_data = {}  # Dictionary to store angle differences for each object in a segment
 
     # Loop through the gaze data entries
     for entry in gaze_data:
@@ -152,13 +153,20 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
                 elif not current_objects:
                     pass
                 else:
-                    # Store in the object history and timestamps
-                    gaze_history.append((current_objects.copy(), gaze_duration))
+                    if current_objects == ['off-target gaze']:
+                        sorted_objects = current_objects
+                    else:
+                        
+                        # Order by average angle diff 
+                        sorted_objects = sorted(current_objects, key=lambda obj: sum(angle_diff_data[obj]) / len(angle_diff_data[obj]))
+                    #Store in history and timestamps
+                    gaze_history.append((sorted_objects.copy(), round(gaze_duration,4)))
                     objects_timestamps.append(
-                        (current_objects.copy(), gaze_start_time, current_time))
+                        (sorted_objects.copy(), gaze_start_time, current_time))
                 
                 # Reset current object since we are no longer tracking a stable gaze
                 current_objects = []
+                angle_diff_data = {}
             continue
 
 
@@ -167,15 +175,14 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
         for obj in entry['objects']:
             if obj['name'] in excluded_objects:
                 continue  # Skip excluded objects
-            # print(f"Object: {obj['name']}, Angle Diff: {obj['angleDiff']}, Angle Diff XZ: {obj['angleDiffXZ']}, velocity: {entry['gaze_velocity']}")
-            # Check if the object satisfies the angle difference thresholds in both 3D and vertical plane
+
             
             if obj['angle_diff'] < angle_diff_threshold and obj['angle_diffXZ'] < angle_diff_xz_threshold and obj['name'] not in excluded_objects:
                 valid_objects.append(obj['name'])
-        # print(f"Object: {object_name}")
-        
-        # if object_name == 'camera':
-        #     object_name = 'Johnnie'
+                
+                if obj['name'] not in angle_diff_data:
+                    angle_diff_data[obj['name']] = []
+                angle_diff_data[obj['name']].append(obj['angle_diff'])
 
         # If no valid object was chosen, but the gaze velocity is below the off-target threshold, mark it as off-target
         if not valid_objects and entry['gaze_velocity'] < off_target_velocity_threshold:
@@ -189,7 +196,7 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
 
         # If the current object being gazed at changes, finalize the previous gaze segment
         if set(valid_objects) != set(current_objects):
-            print(f"Current Objects: {current_objects}, Valid Objects: {valid_objects}")
+            # print(f"Current Objects: {current_objects}, Valid Objects: {valid_objects}")
             # Compute the time spent on the previous object
             gaze_duration = current_time - gaze_start_time
 
@@ -199,21 +206,29 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
             elif not current_objects:
                 pass
             else:
-                # Store in the object history and timestamps
-                gaze_history.append((current_objects.copy(), gaze_duration))
-                objects_timestamps.append(
-                    (current_objects.copy(), gaze_start_time, current_time))
+                if current_objects == ['off-target gaze']:
+                    sorted_objects = current_objects
+                else:
+                    # Order by average angle diff 
+                    sorted_objects = sorted(current_objects, key=lambda obj: sum(angle_diff_data[obj]) / len(angle_diff_data[obj]))
+                # Store in history and timestamps
+                gaze_history.append((sorted_objects.copy(), round(gaze_duration, 4)))
+                objects_timestamps.append((sorted_objects.copy(), gaze_start_time, current_time))
 
             # Switch to the new object and update the start time
             current_objects = valid_objects.copy()
-            gaze_start_time = current_time  
+            gaze_start_time = current_time
+            angle_diff_data = {obj: [entry['objects'][i]['angle_diff']] for i, obj in enumerate(valid_objects)}
 
     # Handle the last object gazed at (after the loop ends)
     if current_objects:
         gaze_duration = current_time - gaze_start_time
-        gaze_history.append((current_objects.copy(), gaze_duration))
-        objects_timestamps.append(
-            (current_objects.copy(), gaze_start_time, current_time))
+        if current_objects == ['off-target gaze']:
+            sorted_objects = current_objects
+        else:
+            sorted_objects = sorted(current_objects, key=lambda obj: sum(angle_diff_data[obj]) / len(angle_diff_data[obj]))
+        gaze_history.append((sorted_objects.copy(), round(gaze_duration, 3)))
+        objects_timestamps.append((sorted_objects.copy(), gaze_start_time, current_time))
     
     # Return the gaze history and object timestamps
     return gaze_history, objects_timestamps
@@ -424,7 +439,7 @@ def plot_multi_gaze_and_speech(gazed_objects_timestamps, words_data):
 
     # Plot Speech Data (Bottom subplot)
     for i, (word, start_time, end_time) in enumerate(words_data):
-        print(f"Word: {word}, Start: {start_time}, End: {end_time}")
+        # print(f"Word: {word}, Start: {start_time}, End: {end_time}")
         ax2.hlines(y=0, xmin=start_time, xmax=end_time, color=(random.random(), random.random(), random.random()), linewidth=6)
         mid_time = (start_time + end_time) / 2
         ax2.text(mid_time, 0, word, ha='center', va='center', fontsize=12, color='black')
