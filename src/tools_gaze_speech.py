@@ -180,23 +180,63 @@ def check_reach_object_for_robot(object_name: str) -> str:
         return f"You can get {object_name}."
     return f"You cannot get {object_name}. "
 
+
 def get_spatial_references() -> str:
+
     """
-    Returns a string representation of the table grid layout with each object labeled by its position.
+
+    Returns a string layout of the table grid with each cell labeled by object name or 'Empty'.
+
     """
     
     table_grid = [
-        ["Empty0_0",        "bowl",         "Empty0_1",            "Empty0_2"],
-        ["box_cereal", "blue_glass",   "unknown_bottle", "Empty1_2"],
-        ["bottle_of_cola", "Empty2_1",       "red_glass",     "Empty2_2"]
+
+        ["Empty0_0", "bowl", "Empty0_1", "Empty0_2"],
+
+        ["box_cereal", "blue_glass", "unknown_bottle", "Empty1_2"],
+
+        ["bottle_of_cola", "Empty2_1", "red_glass", "Empty2_2"]
+
     ]
-     # Convert the grid to a string representation
+
+    # Convert the grid to a string representation
+
     grid_str = ""
+
     for row in table_grid:
+
         row_str = " | ".join(item for item in row)
+
         grid_str += f"{row_str}\n"
-    
+
     return grid_str
+
+def get_robot_spatial_reference() -> str:
+    """
+        Returns a string representation of the robot's position with respect to the table grid in 'table_grid-X_Y' format considering that the is looking towar.
+        The robot is positioned looking towards the table.
+    """
+    # Robot position
+    robot_position = {"row": -1, "col": 1}  # Positioned in front of row 0, column 1
+    
+    # Format the position as 'table_grid-X_Y'
+    position_reference = f"table_grid{robot_position['row']}_{robot_position['col']}"
+    
+    return position_reference
+
+def get_user_spatial_reference() -> str:  
+    """
+        Returns a string representation of the user's position with respect to the table grid in 'table_grid-X_Y' format.
+        The user is positioned looking towards the table.
+    """
+    # User position
+    user_position = {"row": 3, "col": 1}  # Positioned in front of row 0, column 1
+    
+    # Format the position as 'table_grid-X_Y'
+    position_reference = f"table_grid{user_position['row']}_{user_position['col']}"
+    
+    return position_reference
+    
 
 # This is just to text if the robot could infere that the user has done the requested action
 
