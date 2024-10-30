@@ -57,8 +57,8 @@ IMPORTANT: Obey the following rules:
 8. Provide a reason for every response to user requests using the 'reasoning' function to explain decisions. Be concise and clear.
 9. Always Speak out loud using the 'speak' function to communicate clearly and concisely with the user.
 10. Infer object content ONLY from direct user statements or clear indications in speech and gaze. If content is uncertain, ask the user for clarification.
-11. ONLY check the spatial references using the 'get_spatial_references', 'get_robot_spatial_reference' and 'get_user_reference' functions when interpreting ambiguous commands that involve placement or location.
-12. Describe object locations AVODING grid references and USING the nearby actual objects. 
+11. ONLY check the spatial references using the 'get_spatial_references', 'get_robot_spatial_reference' and 'get_user_spatial_reference' functions when interpreting ambiguous commands that involve placement or location.
+12. Describe object locations USING the nearest actual objects or the object current location. Do not mention specific grid positions.
 """
 
 # Agent capabilities
