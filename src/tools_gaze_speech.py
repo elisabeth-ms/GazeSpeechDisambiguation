@@ -180,23 +180,7 @@ def check_reach_object_for_robot(object_name: str) -> str:
         return f"You can get {object_name}."
     return f"You cannot get {object_name}. "
 
-def get_spatial_references() -> str:
-    """
-    Returns a string representation of the table grid layout with each object labeled by its position.
-    """
-    
-    table_grid = [
-        ["Empty0_0",        "bowl",         "Empty0_1",            "Empty0_2"],
-        ["box_cereal", "blue_glass",   "unknown_bottle", "Empty1_2"],
-        ["bottle_of_cola", "Empty2_1",       "red_glass",     "Empty2_2"]
-    ]
-     # Convert the grid to a string representation
-    grid_str = ""
-    for row in table_grid:
-        row_str = " | ".join(item for item in row)
-        grid_str += f"{row_str}\n"
-    
-    return grid_str
+
 
 # This is just to text if the robot could infere that the user has done the requested action
 
