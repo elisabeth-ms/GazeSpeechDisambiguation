@@ -121,7 +121,7 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
 
 def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_velocity_threshold=20.0, angle_diff_threshold=15.0,
                          angle_diff_xz_threshold=5.0, excluded_objects=[], off_target_velocity_threshold=5.0,
-                         off_target_duration_threshold=0.5):
+                         off_target_duration_threshold=0.5, minimum_fixation_duration = 0.05):
 
     # List to store gaze history and object timestamps
     gaze_history = []
@@ -160,10 +160,11 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
                         # Order by average angle diff 
                         sorted_objects = sorted(current_objects, key=lambda obj: sum(angle_diff_data[obj]) / len(angle_diff_data[obj]))
                     #Store in history and timestamps
-                    gaze_history.append((sorted_objects.copy(), round(gaze_duration,4)))
-                    objects_timestamps.append(
-                        (sorted_objects.copy(), gaze_start_time, current_time))
-                
+                    if gaze_duration > minimum_fixation_duration:
+                        gaze_history.append((sorted_objects.copy(), round(gaze_duration,3)))
+                        objects_timestamps.append(
+                            (sorted_objects.copy(), gaze_start_time, current_time))
+                    
                 # Reset current object since we are no longer tracking a stable gaze
                 current_objects = []
                 angle_diff_data = {}
@@ -212,8 +213,9 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
                     # Order by average angle diff 
                     sorted_objects = sorted(current_objects, key=lambda obj: sum(angle_diff_data[obj]) / len(angle_diff_data[obj]))
                 # Store in history and timestamps
-                gaze_history.append((sorted_objects.copy(), round(gaze_duration, 4)))
-                objects_timestamps.append((sorted_objects.copy(), gaze_start_time, current_time))
+                if gaze_duration > minimum_fixation_duration:
+                    gaze_history.append((sorted_objects.copy(), round(gaze_duration, 3)))
+                    objects_timestamps.append((sorted_objects.copy(), gaze_start_time, current_time))
 
             # Switch to the new object and update the start time
             current_objects = valid_objects.copy()
@@ -227,8 +229,10 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
             sorted_objects = current_objects
         else:
             sorted_objects = sorted(current_objects, key=lambda obj: sum(angle_diff_data[obj]) / len(angle_diff_data[obj]))
-        gaze_history.append((sorted_objects.copy(), round(gaze_duration, 3)))
-        objects_timestamps.append((sorted_objects.copy(), gaze_start_time, current_time))
+            
+        if gaze_duration > minimum_fixation_duration:
+            gaze_history.append((sorted_objects.copy(), round(gaze_duration, 3)))
+            objects_timestamps.append((sorted_objects.copy(), gaze_start_time, current_time))
     
     # Return the gaze history and object timestamps
     return gaze_history, objects_timestamps

@@ -540,7 +540,7 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                         # print("Skipping gaze data for user: ", user_raw_gaze_data["agent_name"])
                         continue
                     #gaze_history, objects_timestamps = pyGaze.compute_gaze_history_closest_object(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,10.0, 8.0, excluded_objects, 5.0, 0.5)
-                    gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,10.0, 10.0, excluded_objects, 5.0, 0.5)
+                    gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,10.0, 10.0, excluded_objects, 5.0, 0.5, 0.04)
 
                 # print("Gaze history: ", gaze_history) 
                 # for entry in gazed_objects_timestamps:
