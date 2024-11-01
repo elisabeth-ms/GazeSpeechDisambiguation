@@ -154,7 +154,8 @@ def process_test_data(base_directory, test_number):
             print("Gaze History:", gaze_history)
             
             multi_object_gaze_history, multi_objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(gaze_data, start_listening_time, 30.0,12.0, 12.0, excluded_objects, 5.0, 0.5)
-            print("Multi-Object Gaze History1:", multi_object_gaze_history)  
+            print("Multi-Object Gaze History1:", multi_object_gaze_history)
+
             # gaze_history = pyGaze.compute_multi_object_gaze_history(gaze_data, start_listening_time, 60.0, 20.0)
             # filtered_gaze_history = pyGaze.filter_multi_object_gaze_history(gaze_history, excluded_objects)
             # print("Filtered Multi-Object Gaze History:", filtered_gaze_history)
