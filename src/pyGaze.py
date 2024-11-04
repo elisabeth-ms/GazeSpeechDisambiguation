@@ -38,16 +38,18 @@ def merge_gaze_word_intervals(
                 break  # Only take the first gaze objects found in this interval
 
         merged_rows.append([time_str, current_word, [current_gaze_objects] if current_gaze_objects else []])
-        
+    
+    print("Merged Rows: ", merged_rows)
     
     result_rows = []
     start_time_segment = None
     gazed_objects_segment = []
     new_segment = True
-    i = 0
     for i in range(len(merged_rows)):
+        print("i: ", i)
+        print("Merged Rows: ", merged_rows[i])
         if i < len(merged_rows) - 1:
-            if merged_rows[i][1] == merged_rows[i+1][1]:
+            if merged_rows[i][1] == merged_rows[i+1][1] and merged_rows[i][1] is not None:
                 time_range = merged_rows[i][0]
                 start_str, end_str = time_range.split('-')
                 start_time = float(start_str)
@@ -70,16 +72,23 @@ def merge_gaze_word_intervals(
                     gazed_objects_segment = []
                     new_segment = True
                 else:
-                    result_rows.append(merged_rows[i])
+                    if merged_rows[i][1] is not None or merged_rows[i][2] != []:
+                        result_rows.append(merged_rows[i])
                     new_segment = True
+                    gazed_objects_segment = []
         else:
+            print("Last Row")
+            print("Merged Rows: ", merged_rows[i])
+            
             if gazed_objects_segment:
+                print("Appending Row")
                 time_range = merged_rows[i][0]
                 start_str, end_str = time_range.split('-')
                 start_time = float(start_str)
                 end_time = float(end_str)
                 result_rows.append([f"{start_time_segment:.3f}-{end_time:.3f}", merged_rows[i][1], gazed_objects_segment])
             else:
+                print("Appending Last Row")
                 result_rows.append(merged_rows[i])
 
 
