@@ -3,7 +3,7 @@ import os
 import platform
 import sys
 import time
-import pyLLMHandler
+import py_LLM_handler
 
 sys.path.append(os.path.abspath("/hri/localdisk/emende/AttentiveSupport/src"))
 from function_analyzer import FunctionAnalyzer
@@ -30,8 +30,6 @@ if "OPENAI_API_KEY" not in os.environ:
         "Please set an environment variable with your OPENAI_API_KEY. "
         "See https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety"
     )
-
-
 
 
 SIM = None
@@ -125,7 +123,7 @@ def main():
 
     print_emojis = True
     person_name = "Elisabeth"
-    llm_handler = pyLLMHandler.LLMHandler(config_module=config_file)
+    llm_handler = py_LLM_handler.LLMHandler(config_module=config_file)
     global SIM
     SIM = llm_handler.get_simulation()
     SIM.run()
