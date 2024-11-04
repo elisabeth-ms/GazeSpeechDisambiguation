@@ -1,6 +1,94 @@
 import matplotlib.pyplot as plt
 import random
 
+from typing import List, Tuple, Optional, Dict, Any
+
+
+def merge_gaze_word_intervals(
+        gaze_data: List[Tuple[List[str], float, float]],
+        word_data: List[Tuple[str, float, float]]
+    ) -> Dict[str, Any]:
+
+    # Step 1: Gather all unique boundaries (start and end times of words and gaze segments)
+    boundaries = sorted(set(
+        [start for _, start, _ in gaze_data] +
+        [end for _, _, end in gaze_data] +
+        [start for _, start, _ in word_data] +
+        [end for _, _, end in word_data]
+    ))
+
+    # print("Boundaries: ", boundaries)
+    merged_rows = []
+    for i in range(len(boundaries) - 1):
+        start, end = boundaries[i], boundaries[i + 1]
+        time_str = f"{start:.3f}-{end:.3f}"
+
+        # Find current word in this interval
+        current_word = None
+        for word, word_start, word_end in word_data:
+            if word_start <= start < word_end:
+                current_word = word
+                break  # Only take the first word found in this interval
+        
+          # Find current gaze objects in this interval
+        current_gaze_objects = []
+        for gaze_objects, gaze_start, gaze_end in gaze_data:
+            if gaze_start <= start < gaze_end:
+                current_gaze_objects = gaze_objects
+                break  # Only take the first gaze objects found in this interval
+
+        merged_rows.append([time_str, current_word, [current_gaze_objects] if current_gaze_objects else []])
+        
+    
+    result_rows = []
+    start_time_segment = None
+    gazed_objects_segment = []
+    new_segment = True
+    i = 0
+    for i in range(len(merged_rows)):
+        if i < len(merged_rows) - 1:
+            if merged_rows[i][1] == merged_rows[i+1][1]:
+                time_range = merged_rows[i][0]
+                start_str, end_str = time_range.split('-')
+                start_time = float(start_str)
+                end_time = float(end_str)
+                
+                if new_segment:
+                    start_time_segment = start_time
+                    new_segment = False
+                gazed_objects_segment.append(f"{merged_rows[i][2]}, ({start_time:.3f}-{end_time:.3f})")
+
+
+            else:
+                if gazed_objects_segment:
+                    time_range = merged_rows[i][0]
+                    start_str, end_str = time_range.split('-')
+                    start_time = float(start_str)
+                    end_time = float(end_str)
+                    gazed_objects_segment.append(f"{merged_rows[i][2]}, ({start_time:.3f}-{end_time:.3f})")
+                    result_rows.append([f"{start_time_segment:.3f}-{end_time:.3f}", merged_rows[i][1], gazed_objects_segment])
+                    gazed_objects_segment = []
+                    new_segment = True
+                else:
+                    result_rows.append(merged_rows[i])
+                    new_segment = True
+        else:
+            if gazed_objects_segment:
+                time_range = merged_rows[i][0]
+                start_str, end_str = time_range.split('-')
+                start_time = float(start_str)
+                end_time = float(end_str)
+                result_rows.append([f"{start_time_segment:.3f}-{end_time:.3f}", merged_rows[i][1], gazed_objects_segment])
+            else:
+                result_rows.append(merged_rows[i])
+
+
+        
+    return {
+        "headers": ["Time", "Word", "Gazed Objects"],
+        "rows": result_rows
+    }
+
 
 def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_threshold=20.0, angle_diff_threshold=15.0,
                          angle_diff_xz_threshold=5.0, excluded_objects=[], off_target_velocity_threshold=5.0,

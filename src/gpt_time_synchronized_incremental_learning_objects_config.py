@@ -44,8 +44,9 @@ You receive one combined input from the user in a structured format, which inclu
 
 IMPORTANT: Obey the following rules:
 
-1. Always start gathering all available information related to the request.
+1. Always start gathering all available information related to the request, limited to objects that have been previoysly seen in the gaze history.
 2. Infer which objects are required also considering previous usage. 
+3. Only update your knowledge of the scene based on the gaze history. Do NOT assume the existence of objects that are not encontered though gaze.
 3. You DO NOT need to check the rechability of the objects in the scene.
 4. Focus on inferring the meaning of the user's request based on context, speech input and gaze history.
 5. Disambiguate speech with gaze by analyzing both inputs to clarify ambiguous requests.
@@ -56,7 +57,8 @@ IMPORTANT: Obey the following rules:
 """
 
 # Agent capabilities
-tool_module = "tools_gaze_speech"
+tool_module = "tools_gaze_speech_incremental_learning_objects"
+
 
 # 1. Allways start gathering all available information related to the request.
 # 2. Infer which objects are required also considering previous usage. 
