@@ -39,15 +39,12 @@ def merge_gaze_word_intervals(
 
         merged_rows.append([time_str, current_word, [current_gaze_objects] if current_gaze_objects else []])
     
-    print("Merged Rows: ", merged_rows)
     
     result_rows = []
     start_time_segment = None
     gazed_objects_segment = []
     new_segment = True
     for i in range(len(merged_rows)):
-        print("i: ", i)
-        print("Merged Rows: ", merged_rows[i])
         if i < len(merged_rows) - 1:
             if merged_rows[i][1] == merged_rows[i+1][1] and merged_rows[i][1] is not None:
                 time_range = merged_rows[i][0]
@@ -77,18 +74,14 @@ def merge_gaze_word_intervals(
                     new_segment = True
                     gazed_objects_segment = []
         else:
-            print("Last Row")
-            print("Merged Rows: ", merged_rows[i])
             
             if gazed_objects_segment:
-                print("Appending Row")
                 time_range = merged_rows[i][0]
                 start_str, end_str = time_range.split('-')
                 start_time = float(start_str)
                 end_time = float(end_str)
                 result_rows.append([f"{start_time_segment:.3f}-{end_time:.3f}", merged_rows[i][1], gazed_objects_segment])
             else:
-                print("Appending Last Row")
                 result_rows.append(merged_rows[i])
 
 
@@ -257,9 +250,9 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
                         # Order by average angle diff 
                         sorted_objects = sorted(current_objects, key=lambda obj: sum(angle_diff_data[obj]) / len(angle_diff_data[obj]))
                     #Store in history and timestamps
-                    if gaze_duration > minimum_fixation_duration:
-                        gaze_history.append((sorted_objects.copy(), round(gaze_duration,3)))
-                        objects_timestamps.append(
+                    # if gaze_duration > minimum_fixation_duration:
+                    gaze_history.append((sorted_objects.copy(), round(gaze_duration,3)))
+                    objects_timestamps.append(
                             (sorted_objects.copy(), gaze_start_time, current_time))
                     
                 # Reset current object since we are no longer tracking a stable gaze
@@ -310,9 +303,9 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
                     # Order by average angle diff 
                     sorted_objects = sorted(current_objects, key=lambda obj: sum(angle_diff_data[obj]) / len(angle_diff_data[obj]))
                 # Store in history and timestamps
-                if gaze_duration > minimum_fixation_duration:
-                    gaze_history.append((sorted_objects.copy(), round(gaze_duration, 3)))
-                    objects_timestamps.append((sorted_objects.copy(), gaze_start_time, current_time))
+                #if gaze_duration > minimum_fixation_duration:
+                gaze_history.append((sorted_objects.copy(), round(gaze_duration, 3)))
+                objects_timestamps.append((sorted_objects.copy(), gaze_start_time, current_time))
 
             # Switch to the new object and update the start time
             current_objects = valid_objects.copy()
@@ -327,12 +320,56 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
         else:
             sorted_objects = sorted(current_objects, key=lambda obj: sum(angle_diff_data[obj]) / len(angle_diff_data[obj]))
             
-        if gaze_duration > minimum_fixation_duration:
-            gaze_history.append((sorted_objects.copy(), round(gaze_duration, 3)))
-            objects_timestamps.append((sorted_objects.copy(), gaze_start_time, current_time))
+        #if gaze_duration > minimum_fixation_duration:
+        gaze_history.append((sorted_objects.copy(), round(gaze_duration, 3)))
+        objects_timestamps.append((sorted_objects.copy(), gaze_start_time, current_time))
+    
+    # Now lets check tje gaze history and objects timestamps if we have concurrent gazed objects with short duration we should joint them. 
+    # If they arent the same group of objects and the duration is less than minimum_fixation_duration we should remove them
+    
+    new_objects_timestamps = []
+    new_gaze_history = []
+    print("Gaze History: ", gaze_history)
+    segment_start = True
+    segment_start_time = None
+    for i in range(len(objects_timestamps)):
+        if i < len(objects_timestamps) - 1:
+            current_objects, current_start, current_end = objects_timestamps[i]
+            next_objects, next_start, next_end = objects_timestamps[i+1]
+            if segment_start:
+                segment_start = False
+                segment_start_time = current_start
+            if current_objects == next_objects:
+                if next_start - current_end < minimum_fixation_duration:
+                    continue
+                else:
+                    new_objects_timestamps.append((current_objects, segment_start_time, current_end))
+                    new_gaze_history.append((current_objects, round(current_end - segment_start_time, 3)))
+                    segment_start = True
+            else:
+                if current_end - segment_start_time < minimum_fixation_duration:
+                    segment_start = True
+                else:
+                    new_objects_timestamps.append((current_objects, segment_start_time, current_end))
+                    new_gaze_history.append((current_objects, round(current_end - segment_start_time,3)))
+                    segment_start = True
+        else:
+            current_objects, current_start, current_end = objects_timestamps[i]
+            if segment_start:
+                segment_start = False
+                segment_start_time = current_start
+            if current_end - segment_start_time < minimum_fixation_duration:
+                continue
+            else:
+                new_objects_timestamps.append((current_objects, segment_start_time, current_end))
+                new_gaze_history.append((current_objects, round(current_end - segment_start_time,3)))
+    
+    print("Old Objects Timestamps: ", objects_timestamps)
+    print("New Objects Timestamps: ", new_objects_timestamps)
+    print("New Gaze History: ", new_gaze_history)
     
     # Return the gaze history and object timestamps
-    return gaze_history, objects_timestamps
+    return new_gaze_history, new_objects_timestamps
 
 
 def compute_multi_object_gaze_history(gaze_data, start_time, threshold_angle=60.0, max_average_angle_diff=45.0):
