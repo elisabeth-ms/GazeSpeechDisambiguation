@@ -41,14 +41,14 @@ recordTransformationsEnabled = None
 
 # synchronized_gaze_speech should be set to True if we are using the synchronized gaze and speech data. Also, 
 # the config_file should contain the configuration for the synchronized gaze and speech data."
-synchronized_gaze_speech = False
-config_file = "gpt_gaze_speech_config"
+synchronized_gaze_speech = True
+config_file = "gpt_time_synchronized_gaze_speech_config"
 
 main_dir_path = '/hri/storage/user/emenende/interaction_recordings'
 
 # Initialize dialogue and interaction counters
-dialogue_number = 88  # Adjust this based on which dialogue you want to load
-interaction_number = 1  # Adjust this based on which interaction to start with
+dialogue_number = 46  # Adjust this based on which dialogue you want to load
+interaction_number = 2  # Adjust this based on which interaction to start with
 
 
 main_dir = 'interaction_recordings'
@@ -73,6 +73,7 @@ def load_speech_data(interaction_folder_path, user_name):
     return speech_data
 
 
+time_taken = 0
 
 # Loop through dialogues and interactions, load pre-recorded data
 def run_offline_interactions(llm_handler, main_dir_path, dialogue_number, interaction_number, user_name="Elisabeth"):
@@ -103,19 +104,28 @@ def run_offline_interactions(llm_handler, main_dir_path, dialogue_number, intera
         start_time = speech_data['listening_start_time']
         word_data = [(word_info['word'], word_info['start_time'], word_info['end_time']) for word_info in speech_data['words']]
         if synchronized_gaze_speech:
-            input = pyGaze.merge_gaze_word_intervals(objects_timestamps, word_data)
-            print(f"{llm_handler._user_emojis if print_emojis else ''}{input}")
+            input_data = pyGaze.merge_gaze_word_intervals(objects_timestamps, word_data)
+            print(f"{llm_handler._user_emojis if print_emojis else ''}{input_data}")
             print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{speech_input}")
             print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{objects_timestamps}")
-
-            llm_handler.play_with_functions_synchronized(input=input, person_name=user_name)
+            before_time = time.time()
+            llm_handler.play_with_functions_synchronized(input=input_data, person_name=user_name)
+            print("Time taken current call: ", time.time() - before_time)
+            global time_taken
+            time_taken += time.time() - before_time
+            print("Time taken so far: ", time_taken)
         else:
             print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{speech_input}")
             print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
+            before_time = time.time()
             llm_handler.play_with_functions_gaze_history_speech(speech_input=speech_input, gaze_history=gaze_history, person_name=user_name)
+            print("Time taken current call: ", time.time() - before_time)
+            time_taken += time.time() - before_time
+            print("Time taken so far: ", time_taken)
 
         # Move to the next interaction
         interaction_number += 1
+        input("Press Enter to continue...")
 
 
 
