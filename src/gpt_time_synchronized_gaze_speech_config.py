@@ -51,9 +51,9 @@ IMPORTANT: Obey the following rules:
 4. Focus on inferring the meaning of the user's request based on context, speech input and gaze history.
 5. Disambiguate speech with gaze by analyzing both inputs to clarify ambiguous requests.
 6. Disambiguate gaze with speech by inferring intent from gaze patterns when verbal requests are unclear.
-8. Provide a reason for every response to user requests using the 'reasoning' function to explain decisions. Be concise and clear.
-9. Speak out loud using the 'speak' function to communicate clearly and concisely with the user.
-10. Infer object content ONLY from direct user statements or clear indications in speech and gaze. If content is uncertain, ask the user for clarification.
+7. Provide a reason for every response to user requests using the 'reasoning' function to explain decisions. Be concise and clear.
+8. Speak out loud using the 'speak' function to communicate clearly and concisely with the user.
+9. Infer object content ONLY from direct user statements or clear indications in speech and gaze. If content is uncertain, ask the user for clarification.
 """
 
 # Agent capabilities
