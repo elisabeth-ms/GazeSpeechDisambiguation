@@ -86,9 +86,9 @@ SIMULATION.addLandmarkZmq()
 ARG1 = True
 
 
-def get_objects() -> str:
+def query_objects() -> str:
     """
-    Get all objects that are available in the scene. You can see all these objects.
+    Query all objects that are available in the scene. You can see all these objects.
 
     :return: Result message.
     """
@@ -100,9 +100,9 @@ def get_objects() -> str:
     return "Following objects were observed: " + ", ".join(objects_no_camera) + "."
 
 
-def get_agents() -> str:
+def query_agents() -> str:
     """
-    Get all agents that are available in the scene, including yourself. You can see all these agents.
+    Query all agents that are available in the scene, including yourself. You can see all these agents.
 
     :return: Result message.
     """
@@ -112,75 +112,75 @@ def get_agents() -> str:
     return "The following agents, including yourself, were observed: " + ", ".join(result["agents"]) + "."
 
 
-def is_person_busy_or_idle(person_name: str) -> str:
-    """
-    Check if the person is busy or idle. If the person is busy, it would be hindered from helping.
+# def is_person_busy_or_idle(person_name: str) -> str:
+#     """
+#     Check if the person is busy or idle. If the person is busy, it would be hindered from helping.
 
-    :param person_name: The name of the person to check. The person must be available in the scene.
-    :return: Result message.
-    """
-    agents = SIMULATION.get_agents()["agents"]
-    if person_name not in agents:
-        return f"There is no agent with the name {person_name} in the scene. Did you mean one of these: {agents}?"
+#     :param person_name: The name of the person to check. The person must be available in the scene.
+#     :return: Result message.
+#     """
+#     agents = SIMULATION.get_agents()["agents"]
+#     if person_name not in agents:
+#         return f"There is no agent with the name {person_name} in the scene. Did you mean one of these: {agents}?"
 
-    busy = SIMULATION.isBusy(person_name)
-    if busy is None:
-        return f"It could not be determined if {person_name} is busy. There were technical problems."
-    return f"{person_name} is {'busy' if busy else 'idle'}."
-
-
-def check_hindering_reasons(person_name: str, object_name: str) -> str:
-    """
-    Checks all hindering reasons for a person (busy or idle), and in combination with an object (if person can see and reach object).
-    If the person cannot see or cannot reach the object, it would be hindered from helping with the object.
-    If the person is busy, it would be hindered from helping.
-
-    :param person_name: The name of the person to check. The person must be available in the scene.
-    :param object_name: The name of the object to check. The object must be available in the scene.
-    :return: Result message.
-    """
-    objects = SIMULATION.get_objects()["objects"]
-    if object_name not in objects:
-        return f"There is no object with the name {object_name} in the scene. Did you mean one of these: {objects}?"
-    agents = SIMULATION.get_agents()["agents"]
-    if person_name not in agents:
-        return f"There is no agent with the name {person_name} in the scene. Did you mean one of these: {agents}?"
-
-    # visibility
-    occluded_by_ = SIMULATION.isOccludedBy(person_name, object_name)["occluded_by"]
-    occluded_by = [e["name"] for e in occluded_by_]
-    if not occluded_by:
-        visible_text = f"{person_name} can see {object_name}."
-    else:
-        visible_text = f"{person_name} cannot see {object_name}, it is occluded by {' and '.join(occluded_by)}."
-
-    # reachability
-    if SIMULATION.isReachable(person_name, object_name) is True:
-        reachable_text = f"{person_name} can reach {object_name}."
-    else:
-        reachable_text = f"{person_name} cannot reach {object_name}."
-
-    result_str = visible_text + " "
-    result_str += reachable_text + " "
-    result_str += is_person_busy_or_idle(person_name)
-    return result_str
+#     busy = SIMULATION.isBusy(person_name)
+#     if busy is None:
+#         return f"It could not be determined if {person_name} is busy. There were technical problems."
+#     return f"{person_name} is {'busy' if busy else 'idle'}."
 
 
-def check_reach_object_for_robot(object_name: str) -> str:
-    """
-    Check if you (the_robot) can get the object.
+# def check_hindering_reasons(person_name: str, object_name: str) -> str:
+#     """
+#     Checks all hindering reasons for a person (busy or idle), and in combination with an object (if person can see and reach object).
+#     If the person cannot see or cannot reach the object, it would be hindered from helping with the object.
+#     If the person is busy, it would be hindered from helping.
 
-    :param object_name: The name of the object to check. The object must be available in the scene.
-    :return: Result message.
-    """
-    objects = SIMULATION.get_objects()["objects"]
-    if object_name not in objects:
-        return f"There is no object with the name {object_name} in the scene. Did you mean one of these: {objects}?"
+#     :param person_name: The name of the person to check. The person must be available in the scene.
+#     :param object_name: The name of the object to check. The object must be available in the scene.
+#     :return: Result message.
+#     """
+#     objects = SIMULATION.get_objects()["objects"]
+#     if object_name not in objects:
+#         return f"There is no object with the name {object_name} in the scene. Did you mean one of these: {objects}?"
+#     agents = SIMULATION.get_agents()["agents"]
+#     if person_name not in agents:
+#         return f"There is no agent with the name {person_name} in the scene. Did you mean one of these: {agents}?"
 
-    reachable = SIMULATION.isReachable("robot", object_name)
-    if reachable:
-        return f"You can get {object_name}."
-    return f"You cannot get {object_name}. "
+#     # visibility
+#     occluded_by_ = SIMULATION.isOccludedBy(person_name, object_name)["occluded_by"]
+#     occluded_by = [e["name"] for e in occluded_by_]
+#     if not occluded_by:
+#         visible_text = f"{person_name} can see {object_name}."
+#     else:
+#         visible_text = f"{person_name} cannot see {object_name}, it is occluded by {' and '.join(occluded_by)}."
+
+#     # reachability
+#     if SIMULATION.isReachable(person_name, object_name) is True:
+#         reachable_text = f"{person_name} can reach {object_name}."
+#     else:
+#         reachable_text = f"{person_name} cannot reach {object_name}."
+
+#     result_str = visible_text + " "
+#     result_str += reachable_text + " "
+#     result_str += is_person_busy_or_idle(person_name)
+#     return result_str
+
+
+# def check_reach_object_for_robot(object_name: str) -> str:
+#     """
+#     Check if you (the_robot) can get the object.
+
+#     :param object_name: The name of the object to check. The object must be available in the scene.
+#     :return: Result message.
+#     """
+#     objects = SIMULATION.get_objects()["objects"]
+#     if object_name not in objects:
+#         return f"There is no object with the name {object_name} in the scene. Did you mean one of these: {objects}?"
+
+#     reachable = SIMULATION.isReachable("robot", object_name)
+#     if reachable:
+#         return f"You can get {object_name}."
+#     return f"You cannot get {object_name}. "
 
 
 
