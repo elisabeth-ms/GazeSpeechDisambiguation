@@ -95,7 +95,9 @@ def get_objects() -> str:
     result = SIMULATION.get_objects()
     if not result:
         return "No objects were observed."
-    return "Following objects were observed: " + ", ".join(result["objects"]) + "."
+    
+    objects_no_camera = [obj for obj in result["objects"] if obj != "camera"]
+    return "Following objects were observed: " + ", ".join(objects_no_camera) + "."
 
 
 def get_agents() -> str:
