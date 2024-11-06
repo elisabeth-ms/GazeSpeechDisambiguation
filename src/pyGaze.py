@@ -65,12 +65,16 @@ def merge_gaze_word_intervals(
                     start_time = float(start_str)
                     end_time = float(end_str)
                     gazed_objects_segment.append(f"{merged_rows[i][2]}, ({start_time:.3f}-{end_time:.3f})")
-                    result_rows.append([f"{start_time_segment:.3f}-{end_time:.3f}", merged_rows[i][1], gazed_objects_segment])
+                    result_rows.append([f"Time: {start_time_segment:.3f}-{end_time:.3f}", f"Word: {merged_rows[i][1]}", f"Gazed objects: {gazed_objects_segment}"])
                     gazed_objects_segment = []
                     new_segment = True
                 else:
                     if merged_rows[i][1] is not None or merged_rows[i][2] != []:
-                        result_rows.append(merged_rows[i])
+                        time_range = merged_rows[i][0]
+                        start_str, end_str = time_range.split('-')
+                        start_time = float(start_str)
+                        end_time = float(end_str)
+                        result_rows.append([f"Time: {start_time:.3f}-{end_time:.3f}", f"Word: {merged_rows[i][1]}", f"Gazed objects: {merged_rows[i][2]}"])
                     new_segment = True
                     gazed_objects_segment = []
         else:
@@ -80,14 +84,16 @@ def merge_gaze_word_intervals(
                 start_str, end_str = time_range.split('-')
                 start_time = float(start_str)
                 end_time = float(end_str)
-                result_rows.append([f"{start_time_segment:.3f}-{end_time:.3f}", merged_rows[i][1], gazed_objects_segment])
+                result_rows.append([f"Time: {start_time_segment:.3f}-{end_time:.3f}", f"Word: {merged_rows[i][1]}", f"Gazed objects: {gazed_objects_segment}"])
             else:
-                result_rows.append(merged_rows[i])
-
+                time_range = merged_rows[i][0]
+                start_str, end_str = time_range.split('-')
+                start_time = float(start_str)
+                end_time = float(end_str)
+                result_rows.append([f"Time: {start_time:.3f}-{end_time:.3f}", f"Word: {merged_rows[i][1]}", f"Gazed objects: {merged_rows[i][2]}"])
 
         
     return {
-        "headers": ["Time", "Word", "Gazed Objects"],
         "rows": result_rows
     }
 
@@ -329,7 +335,6 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
     
     new_objects_timestamps = []
     new_gaze_history = []
-    print("Gaze History: ", gaze_history)
     segment_start = True
     segment_start_time = None
     for i in range(len(objects_timestamps)):
@@ -364,10 +369,7 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
                 new_objects_timestamps.append((current_objects, segment_start_time, current_end))
                 new_gaze_history.append((current_objects, round(current_end - segment_start_time,3)))
     
-    print("Old Objects Timestamps: ", objects_timestamps)
-    print("New Objects Timestamps: ", new_objects_timestamps)
-    print("New Gaze History: ", new_gaze_history)
-    
+
     # Return the gaze history and object timestamps
     return new_gaze_history, new_objects_timestamps
 
