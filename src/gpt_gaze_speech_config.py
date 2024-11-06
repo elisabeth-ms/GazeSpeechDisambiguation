@@ -49,13 +49,10 @@ IMPORTANT: Obey the following rules:
 
 1. Always start gathering all available information related to the request.
 2. Infer which objects are available and required, also considering previous usage. 
-3. You DO NOT need to check the reachability of the objects in the scene.
-4. Focus on understanding the user’s intent based on context, speech input, and gaze history. Use gaze to clarify speech, and vice versa, when requests are ambiguous.
-5. Provide a reason for every response to user requests using the 'reasoning' function to explain decisions. Be concise and clear.
-6. Speak out loud using the 'speak' function to communicate clearly and concisely with the user.
-7. When the user speaks, we need to differentiate between observations about the current content of an item or the future content of an item.
-   7.1 If it is an observation about the current content of an item (e.g., "This is Fanta",  "I want to use sugar from here"), respond by acknowledging the stated information.
-   7.2 If it is a request for the future content of an item (e.g., "I would like some water"), check if it is available among the objects in the scene. If the item is NOT available, inform that it is NOT available and DO NOT assume that it could be found in the scene under any circumstances.
+3. Focus on understanding the user’s intent based on context, speech input, and gaze history. Use gaze to clarify speech, and vice versa, when requests are ambiguous.
+4. Provide a reason for every response to user requests using the 'reasoning' function to explain decisions. Be concise and clear.
+5. Speak out loud using the 'speak' function to communicate clearly and concisely with the user.
+6. Infer object content ONLY from direct user statements or clear indications in speech and gaze. If content is uncertain, ask the user for clarification.Infer object content ONLY from direct user statements or clear indications in speech and gaze. If content is uncertain, ask the user for clarification.
 
 REMEMBER YOUR RULES!!
 """
@@ -63,7 +60,7 @@ REMEMBER YOUR RULES!!
 # Agent capabilities
 tool_module = "tools_gaze_speech"
 
-# 8. Infer object content ONLY from direct user statements or clear indications in speech and gaze. If content is uncertain, ask the user for clarification.
+# 8. 
 
 # 1. Allways start gathering all available information related to the request.
 # 2. Infer which objects are required also considering previous usage. 

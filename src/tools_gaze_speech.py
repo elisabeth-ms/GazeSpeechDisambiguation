@@ -76,7 +76,7 @@ SIMULATION.maxGazeAngleDiff = 120.0
 SIMULATION.saveGazeData = True
 SIMULATION.playTransformations = False
 SIMULATION.recordTransformations = recordTransformationsEnabled
-SIMULATION.xmlFileName = "g_example_cola_bottle_two_glasses_bowl_cereal.xml"
+SIMULATION.xmlFileName = "g_example_drink_scenario.xml"
 SIMULATION.init(True)
 SIMULATION.addTTS("native")
 camera_name = "camera_0" 
@@ -110,6 +110,30 @@ def query_agents() -> str:
     if not result:
         return "No agents were observed."
     return "The following agents, including yourself, were observed: " + ", ".join(result["agents"]) + "."
+
+def speak(person_name: str, text: str) -> str:
+    """
+    You speak out the given text.
+
+    :param person_name: The name of the person to speak to. The person must be available in the scene. Give "All" if you want to speak to everyone.
+    :param text: The text to speak.
+    :return: Result message.
+    """
+    agents = SIMULATION.get_agents()["agents"]
+    if person_name not in agents and person_name != "All":
+        return f"There is no agent with the name {person_name} in the scene. Did you mean one of these: {agents}?"
+
+    SIMULATION.execute(f"speak {text}")
+    return f"You said to {person_name}: {text}"
+
+def reasoning(reason: str) -> str:
+    """
+    You provide a reason for the action you are about to take.
+
+    :param reason: The reason for the action.
+    :return: Result message.
+    """
+    return f"You are about to take the following action: {reason}."
 
 
 # def is_person_busy_or_idle(person_name: str) -> str:
@@ -224,29 +248,6 @@ def query_agents() -> str:
 #     return f"You were not able to pour {source_container_name} into {target_container_name}."
 
 
-def speak(person_name: str, text: str) -> str:
-    """
-    You speak out the given text.
-
-    :param person_name: The name of the person to speak to. The person must be available in the scene. Give "All" if you want to speak to everyone.
-    :param text: The text to speak.
-    :return: Result message.
-    """
-    agents = SIMULATION.get_agents()["agents"]
-    if person_name not in agents and person_name != "All":
-        return f"There is no agent with the name {person_name} in the scene. Did you mean one of these: {agents}?"
-
-    SIMULATION.execute(f"speak {text}")
-    return f"You said to {person_name}: {text}"
-
-def reasoning(reason: str) -> str:
-    """
-    You provide a reason for the action you are about to take.
-
-    :param reason: The reason for the action.
-    :return: Result message.
-    """
-    return f"You are about to take the following action: {reason}."
 
 
 # def hand_object_over_to_person(object_name: str, person_name: str) -> str:
