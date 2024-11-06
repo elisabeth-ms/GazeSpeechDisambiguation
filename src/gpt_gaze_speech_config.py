@@ -43,7 +43,7 @@ You receive two types of inputs from the user:
 
     Speech input: The user will verbally ask for help.
     
-    Gaze history: This is divided into segments, each showing the objects the user likely focused on and the duration of that focused period (in seconds). Some segments may include multiple objects ordered by likelyhood.
+    Gaze history: This is divided into segments, each showing the objects the user likely focused on and the duration of that focused period (in seconds). Some segments may include multiple objects ordered by likelihood.
 
 IMPORTANT: Obey the following rules:
 
