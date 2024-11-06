@@ -232,17 +232,22 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
 
                 plot_gaze_queue.put(objects_timestamps)
                 if transcript and gaze_history:
-                    if synchronized_gaze_speech:
-                        input = pyGaze.merge_gaze_word_intervals(objects_timestamps, word_data)
-                        print(f"{llm_handler._user_emojis if print_emojis else ''}{input}")
+                    
+                    if use_only_speech:
                         print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{transcript}")
-                        print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{objects_timestamps}")
-                        llm_handler.play_with_functions_synchronized(input=input, person_name=person_name)
-
+                        llm_handler.play_with_functions_synchronized(transcript, person_name=person_name)
                     else:
-                        print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{transcript}")
-                        print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
-                        llm_handler.play_with_functions_gaze_history_speech(speech_input=transcript, gaze_history=gaze_history, person_name=person_name)
+                        if synchronized_gaze_speech:
+                            input = pyGaze.merge_gaze_word_intervals(objects_timestamps, word_data)
+                            print(f"{llm_handler._user_emojis if print_emojis else ''}{input}")
+                            print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{transcript}")
+                            print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{objects_timestamps}")
+                            llm_handler.play_with_functions_synchronized(input=input, person_name=person_name)
+
+                        else:
+                            print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{transcript}")
+                            print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
+                            llm_handler.play_with_functions_gaze_history_speech(speech_input=transcript, gaze_history=gaze_history, person_name=person_name)
 
                     response = llm_handler.get_response()
     
@@ -267,8 +272,9 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
 
 # synchronized_gaze_speech should be set to True if we are using the synchronized gaze and speech data. Also, 
 # the config_file should contain the configuration for the synchronized gaze and speech data."
-synchronized_gaze_speech = True
-config_file = "gpt_time_synchronized_gaze_speech_config"
+use_only_speech = False
+synchronized_gaze_speech = False
+config_file = "gpt_gaze_speech_config"
 
 SIM = None
 speech_directory_path = None
