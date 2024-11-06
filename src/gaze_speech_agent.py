@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 import py_LLM_handler
 import data_handler
-
+import pickle
 
 if platform.system() == "Linux":
     sys.path.append("lib")
@@ -209,11 +209,17 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                     gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,10.0, 10.0, excluded_objects, 5.0, 0.5, 0.04)
 
 
-
+                all_transcripts = []
+                all_word_data = []
+                full_transcript = None
                 while not transcription_queue.empty():
                     transcript, word_data = transcription_queue.get()
-
-
+                    all_transcripts.append(transcript)
+                    all_word_data.extend(word_data)
+                    print(transcript)
+                if all_transcripts:
+                    full_transcript = " ".join(all_transcripts)
+                
                     # Lets create an interaction folder
                     global interaction_folder_path
                     global interaction_number
@@ -222,33 +228,37 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                     interaction_folder_path = data_handler.create_interaction_folder(dialogue_folder_path,dialogue_number, interaction_number)
                     interaction_number += 1
                     data_handler.save_raw_gaze_data(interaction_folder_path, all_users_raw_gaze_data)
-                    data_handler.save_speech_data(interaction_folder_path, person_name, gaze_start_time, getWallclockTime(), transcript, word_data)
+                    data_handler.save_speech_data(interaction_folder_path, person_name, gaze_start_time, getWallclockTime(), all_transcripts, all_word_data)
                    
                     global recordTransformationsEnabled
                     if recordTransformationsEnabled:
                         json_transformations = SIM.get_recorded_transformations(gaze_start_time, getWallclockTime())
                         data_handler.save_transformations_data_to_json(interaction_folder_path, 'transformations.json', json_transformations)
-                    plot_speech_queue.put(word_data)
+                    plot_speech_queue.put(all_word_data)
 
                 plot_gaze_queue.put(objects_timestamps)
-                if transcript and gaze_history:
+                if full_transcript and gaze_history:
                     
-                    if use_only_speech:
-                        print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{transcript}")
-                        llm_handler.play_with_functions_synchronized(transcript, person_name=person_name)
+                    if input_mode == "speech_only":
+                        print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
+                        llm_handler.play_with_functions_synchronized(full_transcript, person_name=person_name)
+                    elif input_mode == "gaze_only":
+                        print("TODO")
+                    elif input_mode == "gaze_history_speech":
+                        print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
+                        print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
+                        llm_handler.play_with_functions_gaze_history_speech(speech_input=full_transcript, gaze_history=gaze_history, person_name=person_name)
+
+                    elif input_mode == "synchronized_gaze_speech": 
+                        input = pyGaze.merge_gaze_word_intervals(objects_timestamps, word_data)
+                        print(f"{llm_handler._user_emojis if print_emojis else ''}{input}")
+                        print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
+                        print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{objects_timestamps}")
+                        llm_handler.play_with_functions_synchronized(input=input, person_name=person_name)
+
                     else:
-                        if synchronized_gaze_speech:
-                            input = pyGaze.merge_gaze_word_intervals(objects_timestamps, word_data)
-                            print(f"{llm_handler._user_emojis if print_emojis else ''}{input}")
-                            print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{transcript}")
-                            print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{objects_timestamps}")
-                            llm_handler.play_with_functions_synchronized(input=input, person_name=person_name)
-
-                        else:
-                            print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{transcript}")
-                            print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
-                            llm_handler.play_with_functions_gaze_history_speech(speech_input=transcript, gaze_history=gaze_history, person_name=person_name)
-
+                        print("Invalid input mode. Please set input_mode to 'speech_only', 'gaze_only', 'gaze_history_speech', or 'synchronized_gaze_speech'.")
+ 
                     response = llm_handler.get_response()
     
                     # Save interaction data (speech input, gaze input, and GPT responses)
@@ -270,10 +280,7 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
 
 
 
-# synchronized_gaze_speech should be set to True if we are using the synchronized gaze and speech data. Also, 
-# the config_file should contain the configuration for the synchronized gaze and speech data."
-use_only_speech = False
-synchronized_gaze_speech = False
+input_mode = "gaze_history_speech" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
 config_file = "gpt_gaze_speech_config"
 
 SIM = None
@@ -355,6 +362,8 @@ def main():
                     pyGaze.plot_multi_gaze_and_speech(first_object_gaze_data, word_data)
                     global interaction_folder_path
                     plt.savefig(interaction_folder_path+"/plot.png")
+                    with open(interaction_folder_path+"/figure.fig", "wb") as f:
+                        pickle.dump(plt.gcf(), f)
     except KeyboardInterrupt:
         print("\nInterrupted by user")
         if stream.running:
