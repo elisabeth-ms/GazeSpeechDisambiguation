@@ -46,14 +46,15 @@ IMPORTANT: Obey the following rules:
 2. Disregard gaze segments with low duration unless they are repeated or part of a sequence leading to a longer fixation. Focus on objects with significant or sustained attention.
 3. Use the 'reasoning' function to explain your conclusions about the user’s activity. Always include specific gaze-based evidence for your inference. Be concise and clear.
 4. Use the 'speak' function to describe what you think the user is doing. Keep your responses clear and concise.
-5. Do not infer object content or user intent beyond what the gaze history indicates. If the user's activity is unclear, ask for clarification.
-6. Continuously update your inference as new gaze segments are provided. Adjust your understanding of the user's actions based on the most recent data.
+
 
 REMEMBER YOUR RULES!!
 """
 
 # Agent capabilities
 tool_module = "tools_gaze_speech"
+# 5. Do not infer object content or user intent beyond what the gaze history indicates. If the user's activity is unclear, ask for clarification.
+# 6. Continuously update your inference as new gaze segments are provided. Adjust your understanding of the user's actions based on the most recent data.
 
 # 8. 
 

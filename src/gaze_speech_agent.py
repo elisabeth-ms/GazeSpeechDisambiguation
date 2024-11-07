@@ -237,32 +237,35 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                     plot_speech_queue.put(all_word_data)
 
                 plot_gaze_queue.put(objects_timestamps)
-                if full_transcript and gaze_history:
-                    
-                    if input_mode == "speech_only":
-                        print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
-                        llm_handler.play_with_functions_synchronized(full_transcript, person_name=person_name)
-                    elif input_mode == "gaze_only":
-                        print("TODO")
-                    elif input_mode == "gaze_history_speech":
-                        print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
-                        print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
-                        llm_handler.play_with_functions_gaze_history_speech(speech_input=full_transcript, gaze_history=gaze_history, person_name=person_name)
+                if input_mode == "gaze_only":
+                    print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
+                    llm_handler.play_with_functions_synchronized(gaze_history, person_name=person_name)
+                else:
+                    if full_transcript and gaze_history:
+                        
+                        if input_mode == "speech_only":
+                            print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
+                            llm_handler.play_with_functions_synchronized(full_transcript, person_name=person_name)
+                            
+                        elif input_mode == "gaze_history_speech":
+                            print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
+                            print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
+                            llm_handler.play_with_functions_gaze_history_speech(speech_input=full_transcript, gaze_history=gaze_history, person_name=person_name)
 
-                    elif input_mode == "synchronized_gaze_speech": 
-                        input = pyGaze.merge_gaze_word_intervals(objects_timestamps, word_data)
-                        print(f"{llm_handler._user_emojis if print_emojis else ''}{input}")
-                        print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
-                        print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{objects_timestamps}")
-                        llm_handler.play_with_functions_synchronized(input=input, person_name=person_name)
+                        elif input_mode == "synchronized_gaze_speech": 
+                            input = pyGaze.merge_gaze_word_intervals(objects_timestamps, word_data)
+                            print(f"{llm_handler._user_emojis if print_emojis else ''}{input}")
+                            print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
+                            print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{objects_timestamps}")
+                            llm_handler.play_with_functions_synchronized(input=input, person_name=person_name)
 
-                    else:
-                        print("Invalid input mode. Please set input_mode to 'speech_only', 'gaze_only', 'gaze_history_speech', or 'synchronized_gaze_speech'.")
+                        else:
+                            print("Invalid input mode. Please set input_mode to 'speech_only', 'gaze_only', 'gaze_history_speech', or 'synchronized_gaze_speech'.")
  
-                    response = llm_handler.get_response()
+                response = llm_handler.get_response()
     
-                    # Save interaction data (speech input, gaze input, and GPT responses)
-                    data_handler.save_interaction_data_to_json(interaction_folder_path,"interaction_data.json", response)
+                # Save interaction data (speech input, gaze input, and GPT responses)
+                data_handler.save_interaction_data_to_json(interaction_folder_path,"interaction_data.json", response)
 
 
             else:

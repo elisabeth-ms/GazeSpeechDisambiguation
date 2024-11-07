@@ -57,7 +57,6 @@ def merge_gaze_word_intervals(
                     new_segment = False
                 gazed_objects_segment.append(f"{merged_rows[i][2]}, ({start_time:.3f}-{end_time:.3f})")
 
-
             else:
                 if gazed_objects_segment:
                     time_range = merged_rows[i][0]
@@ -65,7 +64,8 @@ def merge_gaze_word_intervals(
                     start_time = float(start_str)
                     end_time = float(end_str)
                     gazed_objects_segment.append(f"{merged_rows[i][2]}, ({start_time:.3f}-{end_time:.3f})")
-                    result_rows.append([f"Time: {start_time_segment:.3f}-{end_time:.3f}", f"Word: {merged_rows[i][1]}", f"Gazed objects: {gazed_objects_segment}"])
+
+                    result_rows.append([f"Time: {start_time_segment:.3f}-{end_time:.3f}", f"Word: {merged_rows[i][1]}", f"Gazed objects: {gazed_objects_segment[0]}"])
                     gazed_objects_segment = []
                     new_segment = True
                 else:
@@ -84,7 +84,7 @@ def merge_gaze_word_intervals(
                 start_str, end_str = time_range.split('-')
                 start_time = float(start_str)
                 end_time = float(end_str)
-                result_rows.append([f"Time: {start_time_segment:.3f}-{end_time:.3f}", f"Word: {merged_rows[i][1]}", f"Gazed objects: {gazed_objects_segment}"])
+                result_rows.append([f"Time: {start_time_segment:.3f}-{end_time:.3f}", f"Word: {merged_rows[i][1]}", f"Gazed objects: {gazed_objects_segment[0]}"])
             else:
                 time_range = merged_rows[i][0]
                 start_str, end_str = time_range.split('-')

@@ -76,7 +76,7 @@ SIMULATION.maxGazeAngleDiff = 120.0
 SIMULATION.saveGazeData = True
 SIMULATION.playTransformations = False
 SIMULATION.recordTransformations = recordTransformationsEnabled
-SIMULATION.xmlFileName = "g_example_drink_scenario.xml"
+SIMULATION.xmlFileName = "g_example_cola_cola_zero_two_glasses_bowl.xml"
 SIMULATION.init(True)
 SIMULATION.addTTS("native")
 camera_name = "camera_0" 
