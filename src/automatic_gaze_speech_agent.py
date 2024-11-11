@@ -11,6 +11,7 @@ import platform
 import py_LLM_handler
 import data_handler
 import pickle
+import matplotlib.pyplot as plt
 
 if platform.system() == "Linux":
     sys.path.append("lib")
@@ -47,7 +48,7 @@ class GazeDataManager:
 
 
 class MicrophoneStream:
-    def __init__(self, rate=16000, chunk_size=1600, hints_filename=None, transcription_queue=None, innactivity_timeout=2, gaze_manager=None, gaze_history_queue=None):
+    def __init__(self, rate=16000, chunk_size=1600, hints_filename=None, innactivity_timeout=2, gaze_manager=None, speech_gaze_queue=None):
         self.rate = rate
         self.chunk_size = chunk_size
         self.q = queue.Queue()
@@ -55,8 +56,8 @@ class MicrophoneStream:
         self.stream = None
         self.running = False
         self.processing_thread = None
-        self.transcription_queue = transcription_queue # Shared queue for transcription
-        
+        self.transcription_queue = queue.Queue() # Shared queue for transcription
+        self.speech_gaze_queue = speech_gaze_queue
         self.inactivity_timeout = innactivity_timeout
         self.last_activity_time =  getWallclockTime()
         self.speech_detected = False  # Track whether any speech was detected
@@ -64,7 +65,8 @@ class MicrophoneStream:
         self.start_time = None
 
         self.gaze_manager = gaze_manager
-        self.gaze_history_queue = gaze_history_queue
+        
+        
         
         
         # Load hints if any
@@ -77,6 +79,8 @@ class MicrophoneStream:
             self.context = speech.SpeechContext(phrases=phrases)
         else:
             self.context = None
+        
+        time.sleep(1)
 
     def audio_callback(self, indata, frames, time_info, status):
         if status:
@@ -84,6 +88,9 @@ class MicrophoneStream:
         self.q.put(indata.copy())
 
     def start_streaming(self):
+        if self.stream is not None:
+            print("Stream already running, restarting...")
+            self.stop_streaming()  # Ensure clean restart
         self.running = True
         self.stream = sd.InputStream(
             samplerate=self.rate,
@@ -93,8 +100,10 @@ class MicrophoneStream:
             blocksize=self.chunk_size,
         )
         self.stream.start()
-        threading.Thread(target=self.monitor_inactivity, daemon=True).start()
-
+        self.start_time = getWallclockTime()  # Or another method to get absolute wall-clock time
+        if not self.processing_thread or not self.processing_thread.is_alive():
+            self.processing_thread = threading.Thread(target=self.process_audio, daemon=True)
+            self.processing_thread.start()
         print("Audio stream started.")
 
     def stop_streaming(self):
@@ -103,6 +112,9 @@ class MicrophoneStream:
             self.stream.stop()
             self.stream.close()
             self.stream = None
+            if self.processing_thread and self.processing_thread.is_alive():
+                self.processing_thread.join() # Wait for processing thread to finish
+        self.q.queue.clear()  # Clear the queue
         print("Audio stream stopped.")
 
     def process_audio(self):
@@ -133,13 +145,14 @@ class MicrophoneStream:
                     yield speech.StreamingRecognizeRequest(audio_content=audio_content)
                 except queue.Empty:
                     continue
-        while self.running:
-            requests = generator()
-            try:
-                responses = client.streaming_recognize(streaming_config, requests)
-                self.listen_print_loop(responses)
-            except Exception as e:
-                print(f"Error during streaming recognition: {e}")
+        print("Running")
+        requests = generator()
+        try:
+            responses = client.streaming_recognize(streaming_config, requests)
+            print("Streaming recognition responses: ", responses)
+            self.listen_print_loop(responses)
+        except Exception as e:
+            print(f"Error during streaming recognition: {e}")
 
     def listen_print_loop(self, responses):
         for response in responses:
@@ -149,13 +162,9 @@ class MicrophoneStream:
             result = response.results[0]
             if not result.alternatives:
                 continue
-            if self.first_recognition:
-                self.first_recognition = False
-                self.start_time =  getWallclockTime()
+
             alternative = result.alternatives[0]
             transcript = alternative.transcript
-
-
 
             words_info = alternative.words
 
@@ -165,13 +174,18 @@ class MicrophoneStream:
             self.last_activity_time =  getWallclockTime()
             self.speech_detected = True
             
-            if self.transcription_queue:
-                self.transcription_queue.put((transcript, word_data))
+            self.transcription_queue.put((transcript, word_data))
 
 
     def monitor_inactivity(self):
         """Stop the stream if no activity within the timeout period."""
         gaze_history = None
+        global interaction_folder_path
+        global interaction_number
+        global dialogue_number
+        global dialogue_folder_path
+        
+        gaze_time_before_speaking = 3.0
         while self.running:
             if self.speech_detected and getWallclockTime() - self.last_activity_time > self.inactivity_timeout:
                 print("Inactivity timeout reached. Stopping audio stream.")
@@ -180,43 +194,79 @@ class MicrophoneStream:
                 all_users_raw_gaze_data = self.gaze_manager.get_all_users_raw_gaze_data()
                 excluded_objects = ['hand_left_robot', 'hand_right_robot', 'camera']
                 
-                person_name = 'Elisabeth'
-                for user_raw_gaze_data in all_users_raw_gaze_data:
-                    if user_raw_gaze_data["agent_name"] != person_name:
-                        continue
-                    gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], self.start_time, 15.0,10.0, 10.0, excluded_objects, 5.0, 0.5, 0.04)
-                print("Gaze history: ", gaze_history)
-                if gaze_history:
-                    self.gaze_history_queue.put(gaze_history)
+              
+                all_transcripts = []
+                all_word_data = []
+                full_transcript = None
+                while not self.transcription_queue.empty():
+                    transcript, word_data = self.transcription_queue.get()
+                    all_transcripts.append(transcript)
+                    all_word_data.extend(word_data)
+                    print(f"Transcript: {transcript}")
+                if all_transcripts:
+                    full_transcript = " ".join(all_transcripts)
+                
+                if all_word_data:
+                    person_name = 'Elisabeth'
+                    for user_raw_gaze_data in all_users_raw_gaze_data:
+                        if user_raw_gaze_data["agent_name"] != person_name:
+                            continue
+                        print("Processing gaze data for user: ", user_raw_gaze_data["agent_name"])
+                        gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], self.start_time+all_word_data[0][1]-gaze_time_before_speaking, 15.0,10.0, 10.0, excluded_objects, 5.0, 0.3, 0.04)
+                    
+                    print("Objects timestamps: ", objects_timestamps)
+                    new_objects_timestamps = []
+                    for object_timestamp in objects_timestamps:
+                        new_objects_timestamps.append((object_timestamp[0], object_timestamp[1]+all_word_data[0][1]-gaze_time_before_speaking, object_timestamp[2]+all_word_data[0][1]-gaze_time_before_speaking))
+                    
                         
+                    
+                    print("Lets check if the transcription queue has data: ")
+
+                    print(f"Full transcript: {full_transcript}")
+                    print("Gaze history: ", gaze_history)
+                    interaction_folder_path = data_handler.create_interaction_folder(dialogue_folder_path,dialogue_number, interaction_number)
+                    interaction_number += 1
+                    data_handler.save_raw_gaze_data(interaction_folder_path, all_users_raw_gaze_data)
+                    data_handler.save_speech_data(interaction_folder_path, person_name, self.start_time, getWallclockTime(), all_transcripts, all_word_data)
+                    
+                    
+                    print("All word data: ", all_word_data)
+                    if all_word_data:
+                        pyGaze.plot_multi_gaze_and_speech(new_objects_timestamps, all_word_data)
+                        plt.savefig(interaction_folder_path+"/plot.png")
+                        with open(interaction_folder_path+"/figure.fig", "wb") as f:
+                            pickle.dump(plt.gcf(), f)
+                        self.speech_gaze_queue.put((full_transcript, all_word_data, gaze_history))
 
                 self.speech_detected = False  # Reset speech detection flag
                 self.running = False
                 self.first_recognition = True
                 self.start_streaming()
-            time.sleep(0.2) 
+
+
+            time.sleep(0.1) 
 
 
 
-def llm_processing_loop(llm_handler, transcription_queue, gaze_history_queue, person_name):
+def llm_processing_loop(llm_handler, speech_gaze_queue, person_name):
     """Thread loop to process LLM interactions."""
     while True:
         try:
-            # Check if there's data to process
-            if not transcription_queue.empty() and not gaze_history_queue.empty():
-                # Retrieve speech and gaze data
-                full_transcript = transcription_queue.get()
-                gaze_history = gaze_history_queue.get()
+
+            if not speech_gaze_queue.empty():
+                full_transcript, all_words_data, gaze_history = speech_gaze_queue.get()
 
                 print(f"Processing LLM for: {full_transcript}")
                 print(f"Gaze history: {gaze_history}")
                 
-                # Pass the data to LLM
                 llm_handler.play_with_functions_gaze_history_speech(
                     speech_input=full_transcript,
                     gaze_history=gaze_history,
                     person_name=person_name
                 )
+                
+               
 
         except Exception as e:
             print(f"Error in LLM processing loop: {e}")
@@ -234,7 +284,7 @@ gpt_responses_path = None
 filtered_gaze_data_directory_path = None
 recordTransformationsEnabled = None
 
-main_dir = 'interaction_recordings'
+main_dir = 'automatic_interaction_recordings'
 main_dir_path = os.path.join('/hri/storage/user/emenende', main_dir)
 
 dialogue_number = 0
@@ -270,16 +320,15 @@ def main():
     )
     args = parser.parse_args()
 
-    transcription_queue = queue.Queue()  # Shared queue to hold transcriptions
-    gaze_history_queue = queue.Queue()  # Shared queue to hold gaze history
+
     time.sleep(1)
     llm_handler = py_LLM_handler.LLMHandler(config_module=config_file)
 
     global SIM
     SIM = llm_handler.get_simulation()
     gaze_manager = GazeDataManager(SIM)
-    
-    stream = MicrophoneStream(rate=args.sample_rate, hints_filename=args.hints, transcription_queue=transcription_queue, innactivity_timeout=2, gaze_manager=gaze_manager, gaze_history_queue=gaze_history_queue)
+    speech_gaze_queue = queue.Queue()
+    stream = MicrophoneStream(rate=args.sample_rate, hints_filename=args.hints, innactivity_timeout=2, gaze_manager=gaze_manager, speech_gaze_queue=speech_gaze_queue)
 
     print_emojis = True
     person_name = 'Elisabeth'
@@ -288,6 +337,9 @@ def main():
         print("Starting stream...")
         stream.start_streaming()
         
+        threading.Thread(target=stream.monitor_inactivity, daemon=True).start()
+
+        
         # Start audio processing thread
         stream.processing_thread = threading.Thread(target=stream.process_audio)
         stream.processing_thread.start()
@@ -295,7 +347,7 @@ def main():
         # Start LLM processing in a separate thread
         llm_thread = threading.Thread(
             target=llm_processing_loop,
-            args=(llm_handler, transcription_queue, gaze_history_queue, person_name),
+            args=(llm_handler, speech_gaze_queue, person_name),
             daemon=True  # LLM thread stops when main program exits
         )
         llm_thread.start()
@@ -304,6 +356,10 @@ def main():
         stream.processing_thread.join()
         llm_thread.join()
         # Keep simulation running
+        
+        while True:
+            time.sleep(0.5)
+            
 
     except KeyboardInterrupt:
         print("\nInterrupted by user.")
