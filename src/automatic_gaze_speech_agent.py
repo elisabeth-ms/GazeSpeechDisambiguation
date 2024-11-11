@@ -185,7 +185,7 @@ class MicrophoneStream:
         global dialogue_number
         global dialogue_folder_path
         
-        gaze_time_before_speaking = 3.0
+        gaze_time_before_speaking = 2.0
         while self.running:
             if self.speech_detected and getWallclockTime() - self.last_activity_time > self.inactivity_timeout:
                 print("Inactivity timeout reached. Stopping audio stream.")
@@ -202,7 +202,7 @@ class MicrophoneStream:
                     transcript, word_data = self.transcription_queue.get()
                     all_transcripts.append(transcript)
                     all_word_data.extend(word_data)
-                    print(f"Transcript: {transcript}")
+                    # print(f"Transcript: {transcript}")
                 if all_transcripts:
                     full_transcript = " ".join(all_transcripts)
                 
@@ -231,13 +231,13 @@ class MicrophoneStream:
                     data_handler.save_speech_data(interaction_folder_path, person_name, self.start_time, getWallclockTime(), all_transcripts, all_word_data)
                     
                     
-                    print("All word data: ", all_word_data)
+                    # print("All word data: ", all_word_data)
                     if all_word_data:
                         pyGaze.plot_multi_gaze_and_speech(new_objects_timestamps, all_word_data)
                         plt.savefig(interaction_folder_path+"/plot.png")
                         with open(interaction_folder_path+"/figure.fig", "wb") as f:
                             pickle.dump(plt.gcf(), f)
-                        self.speech_gaze_queue.put((full_transcript, all_word_data, gaze_history))
+                        self.speech_gaze_queue.put((full_transcript, all_word_data, gaze_history, new_objects_timestamps))
 
                 self.speech_detected = False  # Reset speech detection flag
                 self.running = False
@@ -249,22 +249,34 @@ class MicrophoneStream:
 
 
 
-def llm_processing_loop(llm_handler, speech_gaze_queue, person_name):
+def llm_processing_loop(llm_handler, speech_gaze_queue, person_name, input_mode="gaze_history_speech", print_emojis=True):
     """Thread loop to process LLM interactions."""
     while True:
         try:
 
             if not speech_gaze_queue.empty():
-                full_transcript, all_words_data, gaze_history = speech_gaze_queue.get()
+                full_transcript, all_words_data, gaze_history, objects_timestamps = speech_gaze_queue.get()
+                print(f"Full transcript: {full_transcript}")
+                if input_mode == "speech_only":
+                    print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
+                    llm_handler.play_with_functions_synchronized(full_transcript, person_name)
+                elif input_mode == "gaze_history_speech":
+                    print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{full_transcript}")
+                    print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
+                    llm_handler.play_with_functions_gaze_history_speech(
+                        speech_input=full_transcript,
+                        gaze_history=gaze_history,
+                        person_name=person_name
+                    )
+                elif input_mode == "synchronized_gaze_speech":
+                    input = pyGaze.merge_gaze_word_intervals(objects_timestamps, all_words_data)
+                    print(f"{llm_handler._user_emojis if print_emojis else ''}{input}")
+                    llm_handler.play_with_functions_synchronized(input=input, person_name=person_name)
 
-                print(f"Processing LLM for: {full_transcript}")
-                print(f"Gaze history: {gaze_history}")
-                
-                llm_handler.play_with_functions_gaze_history_speech(
-                    speech_input=full_transcript,
-                    gaze_history=gaze_history,
-                    person_name=person_name
-                )
+                response = llm_handler.get_response()
+    
+                # Save interaction data (speech input, gaze input, and GPT responses)
+                data_handler.save_interaction_data_to_json(interaction_folder_path,"interaction_data.json", response)
                 
                
 
@@ -274,8 +286,9 @@ def llm_processing_loop(llm_handler, speech_gaze_queue, person_name):
         time.sleep(0.5)  # Prevent busy loop
 
 
+## In the automatic_gaze_speech_agent.py, we can't use gaze_only mode because we need the speech to be able to segment the gaze data
 
-input_mode = "gaze_history_speech" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
+input_mode = "gaze_history_speech" # Options: "speech_only", "gaze_history_speech", "synchronized_gaze_speech"
 config_file = "gpt_gaze_speech_config"
 
 SIM = None
@@ -347,7 +360,7 @@ def main():
         # Start LLM processing in a separate thread
         llm_thread = threading.Thread(
             target=llm_processing_loop,
-            args=(llm_handler, speech_gaze_queue, person_name),
+            args=(llm_handler, speech_gaze_queue, person_name, input_mode, print_emojis),
             daemon=True  # LLM thread stops when main program exits
         )
         llm_thread.start()

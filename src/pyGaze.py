@@ -454,9 +454,10 @@ def filter_multi_object_gaze_history(gaze_history, excluded_objects):
     return filtered_gaze_history
 
 
-def plot_angle_diff_over_time(gaze_data, start_time=0, end_time=None, angle_diff_mode='3D'):
+def plot_angle_diff_over_time(gaze_data, start_time=0.0, end_time=None, angle_diff_mode='3D'):
     # Extract all unique objects from gaze data
     unique_objects = set()
+    print(gaze_data)
     for entry in gaze_data:
         for obj in entry['objects']:
             unique_objects.add(obj['name'])
@@ -475,10 +476,11 @@ def plot_angle_diff_over_time(gaze_data, start_time=0, end_time=None, angle_diff
         raise ValueError(f"Invalid angle_diff_mode: {angle_diff_mode}. Position must be one of '3D', 'XZ', or 'XY'")
     # Initialize data dictionary for each object
     object_data = {obj: {'times': [], selected_angle_diffs: []} for obj in unique_objects}
-    
+    print(object_data)
     # Loop through the gaze data and fill in time and angleDiff values for each object
     for entry in gaze_data:
         current_time = entry['time']
+        print(current_time)
         if current_time >= start_time and current_time <= end_time:
             objects_in_frame = {obj_data['name']: obj_data[selected_angle_diff] for obj_data in entry['objects']}
             
@@ -490,6 +492,7 @@ def plot_angle_diff_over_time(gaze_data, start_time=0, end_time=None, angle_diff
                     # If the object is not in the frame, add None to leave a gap
                     object_data[obj]['times'].append(current_time-start_time)
                     object_data[obj][selected_angle_diffs].append(None)
+    print(object_data)
 
     # Plot all objects' angleDiffs on the same graph with different colors
     plt.figure(figsize=(10, 6))
@@ -558,10 +561,12 @@ def plot_gaze_and_speech(gazed_objects_timestamps, words_data):
 
     plt.tight_layout()
     
-def plot_multi_gaze_and_speech(gazed_objects_timestamps, words_data):
+def plot_multi_gaze_and_speech(gazed_objects_timestamps, words_data, start_time_limit=None, end_time_limit=None):
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)  # Two subplots, sharing the same x-axis
 
+    print(gazed_objects_timestamps)
+    print(words_data)
     # Extract unique objects for the y-axis
     unique_objects = list(set([obj for objs, _, _ in gazed_objects_timestamps for obj in objs]))
     object_mapping = {obj: i for i, obj in enumerate(unique_objects)}
@@ -571,19 +576,26 @@ def plot_multi_gaze_and_speech(gazed_objects_timestamps, words_data):
         for obj in objs:  # Now we loop over multiple objects in each segment
             ax1.hlines(y=object_mapping[obj], xmin=start_time, xmax=end_time, label=obj, linewidth=5)
 
+    # Set x-axis limits if specified
+    if start_time_limit is not None and end_time_limit is not None:
+        ax1.set_xlim(start_time_limit, end_time_limit)
+
     ax1.set_yticks(range(len(unique_objects)))
     ax1.set_yticklabels(unique_objects)
     ax1.set_ylabel('Gaze Objects')
     ax1.set_title('Gaze Data Over Time')
     ax1.grid(True)
 
+
     # Plot Speech Data (Bottom subplot)
     for i, (word, start_time, end_time) in enumerate(words_data):
-        # print(f"Word: {word}, Start: {start_time}, End: {end_time}")
+        print(f"Word: {word}, Start: {start_time}, End: {end_time}")
         ax2.hlines(y=0, xmin=start_time, xmax=end_time, color=(random.random(), random.random(), random.random()), linewidth=6)
         mid_time = (start_time + end_time) / 2
         ax2.text(mid_time, 0, word, ha='center', va='center', fontsize=12, color='black')
 
+    if start_time_limit is not None and end_time_limit is not None:
+        ax2.set_xlim(start_time_limit, end_time_limit)
     ax2.set_xlabel('Time (seconds)')
     ax2.set_ylabel('Speech')
     ax2.set_title('Speech Word-level Timestamps')
