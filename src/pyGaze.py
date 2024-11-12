@@ -217,7 +217,7 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
 
 def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_velocity_threshold=20.0, angle_diff_threshold=15.0,
                          angle_diff_xz_threshold=5.0, excluded_objects=[], off_target_velocity_threshold=5.0,
-                         off_target_duration_threshold=0.5, minimum_fixation_duration = 0.05):
+                         off_target_duration_threshold=0.5, minimum_fixation_duration = 0.05, end_time=None):
 
     # List to store gaze history and object timestamps
     gaze_history = []
@@ -230,6 +230,11 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
 
     # Loop through the gaze data entries
     for entry in gaze_data:
+        
+        if end_time:
+            if entry['time'] > end_time:
+                continue
+        
         # Calculate the current time relative to the start time
         current_time = entry['time'] - start_time
         if current_time < 0:

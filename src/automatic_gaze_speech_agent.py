@@ -186,6 +186,7 @@ class MicrophoneStream:
         global dialogue_folder_path
         
         gaze_time_before_speaking = 2.0
+        gaze_time_after_speaking = 1.0
         while self.running:
             if self.speech_detected and getWallclockTime() - self.last_activity_time > self.inactivity_timeout:
                 print("Inactivity timeout reached. Stopping audio stream.")
@@ -212,7 +213,8 @@ class MicrophoneStream:
                         if user_raw_gaze_data["agent_name"] != person_name:
                             continue
                         print("Processing gaze data for user: ", user_raw_gaze_data["agent_name"])
-                        gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], self.start_time+all_word_data[0][1]-gaze_time_before_speaking, 15.0,10.0, 10.0, excluded_objects, 5.0, 0.3, 0.04)
+                        end_time = self.start_time+all_word_data[-1][2]+gaze_time_after_speaking
+                        gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], self.start_time+all_word_data[0][1]-gaze_time_before_speaking, 15.0,10.0, 10.0, excluded_objects, 5.0, 0.3, 0.04, end_time=end_time)
                     
                     print("Objects timestamps: ", objects_timestamps)
                     new_objects_timestamps = []
