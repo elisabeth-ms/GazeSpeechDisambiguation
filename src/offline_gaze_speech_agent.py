@@ -40,19 +40,19 @@ filtered_gaze_data_directory_path = None
 recordTransformationsEnabled = None
 
 
-input_mode = "synchronized_gaze_speech" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
-config_file = "gpt_time_synchronized_gaze_speech_config"
+input_mode = "gaze_history_speech" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
+config_file = "gpt_gaze_speech_config"
 
 main_dir_path = '/hri/storage/user/emenende/interaction_recordings'
 
 # Initialize dialogue and interaction counters
-dialogue_number = 129 # Adjust this based on which dialogue you want to load
+dialogue_number = 214 # Adjust this based on which dialogue you want to load
 interaction_number = 1  # Adjust this based on which interaction to start with
 
 
 main_dir = 'interaction_recordings'
 main_dir_path = os.path.join('/hri/storage/user/emenende', main_dir)
-excluded_objects = ['hand_left_robot', 'hand_right_robot', 'camera']
+excluded_objects = ['hand_left_robot', 'hand_right_robot']
 
 
 
@@ -98,7 +98,7 @@ def run_offline_interactions(llm_handler, main_dir_path, dialogue_number, intera
         speech_input = speech_data["transcript"]
         start_time = speech_data["listening_start_time"]
 
-        gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], start_time, 15.0,13.4, 10.0, excluded_objects, 5.0, 0.5, 0.04)
+        gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], start_time, 15.0,8, 8.0, excluded_objects, 5.0, 0.5, 0.04)
 
         start_time = speech_data['listening_start_time']
         word_data = [(word_info['word'], word_info['start_time'], word_info['end_time']) for word_info in speech_data['words']]

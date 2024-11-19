@@ -44,8 +44,7 @@ def main():
     SIM.noLimits = False
     SIM.verbose = False
     SIM.maxGazeAngleDiff = 120.0
-    SIM.saveGazeData = True
-    SIM.xmlFileName = "g_example_cola_orange_juice_two_glasses_bowl_ice.xml"
+    SIM.xmlFileName = "g_example_breakfast_scenario.xml"
     SIM.playTransformations = True
     SIM.recordTransformations = True
     SIM.init(True)
@@ -55,17 +54,17 @@ def main():
     SIM.run()
     
     gaze_manager = GazeDataManager(SIM=SIM)
-    sleep_time = 0.1
+    sleep_time = 0.05
     gaze_start_time = None
     current_object = None
     
-    gaze_velocity_threshold = 20
-    angle_diff_threshold = 10 
-    angle_diff_xz_threshold = 10
-    gaze_duration_threshold = 0.3
+    gaze_velocity_threshold = 15
+    angle_diff_threshold = 5 
+    angle_diff_xz_threshold = 5
+    gaze_duration_threshold = 0.1
     already_said = False
     
-    excluded_objects = ['hand_left_robot', 'hand_right_robot']
+    excluded_objects = ['hand_left_robot', 'hand_right_robot', 'Hand_left_Elisabeth', 'Hand_right_Elisabeth']
     
     user_name = "Elisabeth"
     
@@ -86,13 +85,13 @@ def main():
                             current_object = None
                             continue
                         object_name = None  # Default
+                        obj = None
                         for obj in entry['objects']:
                             if obj['name'] in excluded_objects:
                                 continue
                             if obj['angle_diff'] < angle_diff_threshold and obj['angle_diffXZ'] < angle_diff_xz_threshold:
                                 object_name = obj['name']
                                 break
-                        
                         # Initialize the first object and gaze start time
                         if current_object is None and gaze_start_time is None:
                             current_object = object_name
@@ -104,7 +103,7 @@ def main():
                             gaze_duration = current_time - gaze_start_time
                             if gaze_duration > gaze_duration_threshold and not already_said:
                                 speak(SIM, current_object)
-                                print("Object: ", current_object, " Duration: ", gaze_duration)
+                                print("Object: ", current_object, " Duration: ", gaze_duration, "angle diff: ", obj['angle_diff'], "angle diff xz: ", obj['angle_diffXZ'])
                                 already_said = True
                                 continue
                         

@@ -353,6 +353,9 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
                 if next_start - current_end < minimum_fixation_duration:
                     continue
                 else:
+                    for i in range(len(current_objects)):
+                        if current_objects[i] == 'camera':
+                            current_objects[i] = 'Johnnie'
                     new_objects_timestamps.append((current_objects, segment_start_time, current_end))
                     new_gaze_history.append((current_objects, round(current_end - segment_start_time, 3)))
                     segment_start = True
@@ -360,6 +363,9 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
                 if current_end - segment_start_time < minimum_fixation_duration:
                     segment_start = True
                 else:
+                    for i in range(len(current_objects)):
+                        if current_objects[i] == 'camera':
+                            current_objects[i] = 'Johnnie'
                     new_objects_timestamps.append((current_objects, segment_start_time, current_end))
                     new_gaze_history.append((current_objects, round(current_end - segment_start_time,3)))
                     segment_start = True
@@ -371,6 +377,9 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
             if current_end - segment_start_time < minimum_fixation_duration:
                 continue
             else:
+                for i in range(len(current_objects)):
+                    if current_objects[i] == 'camera':
+                        current_objects[i] = 'Johnnie'
                 new_objects_timestamps.append((current_objects, segment_start_time, current_end))
                 new_gaze_history.append((current_objects, round(current_end - segment_start_time,3)))
     

@@ -200,14 +200,15 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                 stream.processing_thread.join()  # Wait for transcription to finish
                 stream.stop_streaming()
                 all_users_raw_gaze_data = gaze_manager.get_all_users_raw_gaze_data()
-                excluded_objects = ['hand_left_robot', 'hand_right_robot', 'camera']
+                excluded_objects = ['hand_left_robot', 'hand_right_robot']
                 
                 person_name = 'Elisabeth'
                 for user_raw_gaze_data in all_users_raw_gaze_data:
                     if user_raw_gaze_data["agent_name"] != person_name:
                         continue
-                    gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,10.0, 10.0, excluded_objects, 5.0, 0.5, 0.04)
+                    gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,6.0, 6.0, excluded_objects, 5.0, 0.5, 0.04)
 
+                
 
                 all_transcripts = []
                 all_word_data = []
