@@ -46,7 +46,7 @@ config_file = "gpt_gaze_speech_config"
 main_dir_path = '/hri/storage/user/emenende/interaction_recordings'
 
 # Initialize dialogue and interaction counters
-dialogue_number = 214 # Adjust this based on which dialogue you want to load
+dialogue_number = 194 # Adjust this based on which dialogue you want to load
 interaction_number = 1  # Adjust this based on which interaction to start with
 
 
@@ -98,13 +98,13 @@ def run_offline_interactions(llm_handler, main_dir_path, dialogue_number, intera
         speech_input = speech_data["transcript"]
         start_time = speech_data["listening_start_time"]
 
-        gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], start_time, 15.0,8, 8.0, excluded_objects, 5.0, 0.5, 0.04)
+        gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], start_time, 15.0,8.0, 8.0, excluded_objects, 5.0, 0.5, 0.04)
 
         start_time = speech_data['listening_start_time']
         word_data = [(word_info['word'], word_info['start_time'], word_info['end_time']) for word_info in speech_data['words']]
         global time_taken
         pyGaze.plot_multi_gaze_and_speech(objects_timestamps, word_data)
-        pyGaze.plot_angle_diff_over_time(user_raw_gaze_data["gaze_data"], start_time, start_time+10.0, '3D')
+        # pyGaze.plot_angle_diff_over_time(user_raw_gaze_data["gaze_data"], start_time, start_time+10.0, '3D')
         
         plt.show()
         if input_mode == "speech_only":

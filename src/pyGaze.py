@@ -471,7 +471,7 @@ def filter_multi_object_gaze_history(gaze_history, excluded_objects):
 def plot_angle_diff_over_time(gaze_data, start_time=0.0, end_time=None, angle_diff_mode='3D'):
     # Extract all unique objects from gaze data
     unique_objects = set()
-    print(gaze_data)
+    # print(gaze_data)
     for entry in gaze_data:
         for obj in entry['objects']:
             unique_objects.add(obj['name'])
@@ -490,11 +490,11 @@ def plot_angle_diff_over_time(gaze_data, start_time=0.0, end_time=None, angle_di
         raise ValueError(f"Invalid angle_diff_mode: {angle_diff_mode}. Position must be one of '3D', 'XZ', or 'XY'")
     # Initialize data dictionary for each object
     object_data = {obj: {'times': [], selected_angle_diffs: []} for obj in unique_objects}
-    print(object_data)
+    # print(object_data)
     # Loop through the gaze data and fill in time and angleDiff values for each object
     for entry in gaze_data:
         current_time = entry['time']
-        print(current_time)
+        # print(current_time)
         if current_time >= start_time and current_time <= end_time:
             objects_in_frame = {obj_data['name']: obj_data[selected_angle_diff] for obj_data in entry['objects']}
             
@@ -506,7 +506,7 @@ def plot_angle_diff_over_time(gaze_data, start_time=0.0, end_time=None, angle_di
                     # If the object is not in the frame, add None to leave a gap
                     object_data[obj]['times'].append(current_time-start_time)
                     object_data[obj][selected_angle_diffs].append(None)
-    print(object_data)
+    # print(object_data)
 
     # Plot all objects' angleDiffs on the same graph with different colors
     plt.figure(figsize=(10, 6))
@@ -579,8 +579,8 @@ def plot_multi_gaze_and_speech(gazed_objects_timestamps, words_data, start_time_
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)  # Two subplots, sharing the same x-axis
 
-    print(gazed_objects_timestamps)
-    print(words_data)
+    # print(gazed_objects_timestamps)
+    # print(words_data)
     # Extract unique objects for the y-axis
     unique_objects = list(set([obj for objs, _, _ in gazed_objects_timestamps for obj in objs]))
     object_mapping = {obj: i for i, obj in enumerate(unique_objects)}

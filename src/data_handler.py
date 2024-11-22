@@ -73,6 +73,34 @@ def save_transformations_data_to_json(directory, file_name, json_transformations
     with open(directory+"/"+file_name, 'w') as f:
         json.dump(json_transformations, f, indent=4)
 
+def save_config_to_json(
+    file_path, 
+    gaze_velocity_threshold, 
+    angle_diff_threshold, 
+    angle_diff_xz_threshold, 
+    excluded_objects, 
+    off_target_velocity_threshold, 
+    off_target_duration_threshold, 
+    minimum_fixation_duration
+):
+    # Create a dictionary with the provided parameters
+    config = {
+        "gaze_velocity_threshold": gaze_velocity_threshold,
+        "angle_diff_threshold": angle_diff_threshold,
+        "angle_diff_xz_threshold": angle_diff_xz_threshold,
+        "excluded_objects": excluded_objects,
+        "off_target_velocity_threshold": off_target_velocity_threshold,
+        "off_target_duration_threshold": off_target_duration_threshold,
+        "minimum_fixation_duration": minimum_fixation_duration
+    }
+    
+    # Save the configuration to a JSON file
+    try:
+        with open(file_path, 'w') as json_file:
+            json.dump(config, json_file, indent=4)
+        print(f"Configuration saved to {file_path}")
+    except Exception as e:
+        print(f"Error saving configuration: {e}")
 
 
 

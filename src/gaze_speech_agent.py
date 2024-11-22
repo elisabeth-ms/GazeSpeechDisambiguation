@@ -200,13 +200,13 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                 stream.processing_thread.join()  # Wait for transcription to finish
                 stream.stop_streaming()
                 all_users_raw_gaze_data = gaze_manager.get_all_users_raw_gaze_data()
-                excluded_objects = ['hand_left_robot', 'hand_right_robot']
                 
+
                 person_name = 'Elisabeth'
                 for user_raw_gaze_data in all_users_raw_gaze_data:
                     if user_raw_gaze_data["agent_name"] != person_name:
                         continue
-                    gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], gaze_start_time, 15.0,6.0, 6.0, excluded_objects, 5.0, 0.5, 0.04)
+                    gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], gaze_start_time, gaze_velocity_threshold, angle_diff_threshold, angle_diff_xz_threshold, excluded_objects, off_target_velocity_threshold, off_target_duration_threshold, minimum_fixation_duration)
 
                 
 
@@ -232,6 +232,7 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                     data_handler.save_speech_data(interaction_folder_path, person_name, gaze_start_time, getWallclockTime(), all_transcripts, all_word_data)
                    
                     global recordTransformationsEnabled
+                    recordTransformationsEnabled = SIM.recordTransformations
                     if recordTransformationsEnabled:
                         json_transformations = SIM.get_recorded_transformations(gaze_start_time, getWallclockTime())
                         data_handler.save_transformations_data_to_json(interaction_folder_path, 'transformations.json', json_transformations)
@@ -294,7 +295,9 @@ filtered_gaze_data_directory_path = None
 recordTransformationsEnabled = None
 
 main_dir = 'interaction_recordings'
-main_dir_path = os.path.join('/hri/storage/user/emenende', main_dir)
+main_dir_path = os.path.join('/hri/localdisk/emende', main_dir)
+
+# main_dir_path = os.path.join('/hri/storage/user/emenende', main_dir)
 
 dialogue_number = 0
 dialogue_folder_path = None
@@ -304,12 +307,23 @@ interaction_folder_path = None
 
 gaze_start_time = -1.0
 
+gaze_velocity_threshold = 15.0
+angle_diff_threshold = 8.0
+angle_diff_xz_threshold = 8.0
+excluded_objects = ['hand_left_robot', 'hand_right_robot']
+off_target_velocity_threshold = 5.0
+off_target_duration_threshold = 0.5
+minimum_fixation_duration = 0.08
+
 main_dir_path = data_handler.create_interaction_recordings(main_dir_path)
 while dialogue_folder_path is None:
     dialogue_number += 1
     dialogue_folder_path = data_handler.create_dialogue_folder(main_dir_path, dialogue_number)
 print(f"Dialogue folder path: {dialogue_folder_path}")
 
+config_data_file = os.path.join(dialogue_folder_path, 'config.json')
+
+data_handler.save_config_to_json(config_data_file, gaze_velocity_threshold, angle_diff_threshold, angle_diff_xz_threshold, excluded_objects, off_target_velocity_threshold, off_target_duration_threshold, minimum_fixation_duration)
 
 def main():
     # Create a command-line parser.

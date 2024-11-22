@@ -242,5 +242,5 @@ class LLMHandler:
         response = self._query_llm(self.messages)
         message = response.choices[0].message
         self.messages.append(response.choices[0].message)
-        print(self.messages)
+        # print(self.messages)
         return self.messages
