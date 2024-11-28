@@ -1,0 +1,318 @@
+import pandas as pd
+from itertools import product
+
+import pandas as pd
+from openpyxl import Workbook
+from openpyxl.styles import Alignment
+import os
+import json
+import pyGaze
+import sys
+import os
+import platform
+import sys
+import time
+import py_LLM_handler
+from matplotlib import pyplot as plt
+sys.path.append(os.path.abspath("/hri/localdisk/emende/AttentiveSupport/src"))
+from function_analyzer import FunctionAnalyzer
+
+import json
+from openai.types.chat.chat_completion import ChatCompletionMessage
+
+if platform.system() == "Linux":
+    sys.path.append("lib")
+elif platform.system() == "Windows":
+    sys.path.append("bin")
+
+from pyAffaction import *
+sys.path.append(os.path.abspath("/hri/localdisk/emende/AttentiveSupport/src/Smile/src/AffAction/python"))
+import pyGaze
+
+class MissingEnvironmentVariable(Exception):
+    pass
+
+
+if "OPENAI_API_KEY" not in os.environ:
+    raise MissingEnvironmentVariable(
+        "Please set an environment variable with your OPENAI_API_KEY. "
+        "See https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety"
+    )
+
+
+
+SIM = None
+print_emojis = True  
+speech_directory_path = None
+gpt_responses_path = None
+filtered_gaze_data_directory_path = None
+recordTransformationsEnabled = None
+
+
+main_dir = "/hri/localdisk/emende/interaction_recordings/users"
+input_mode = "ASYNC GAZE+SPEECH+SCENE" # Options: "ASYNC GAZE+SPEECH+SCENE", "SYNC GAZE+SPEECH+SCENE", 
+                                       # "ASYNC GAZE+SPEECH", "SYNC GAZE+SPEECH", "SPEECH+SCENE", "GAZE+SCENE"
+scenario = "Breakfast"
+
+config_files_dict = {
+    "ASYNC GAZE+SPEECH+SCENE": "gpt_gaze_speech_scene_config",
+    "SYNC GAZE+SPEECH+SCENE": "gpt_sync_gaze_speech_scene_config",
+    "ASYNC GAZE+SPEECH": "gpt_gaze_speech_config",
+    "SYNC GAZE+SPEECH": "gpt_sync_gaze_speech_config",
+    "SPEECH+SCENE": "gpt_speech_scene_config",
+    "GAZE+SCENE": "gpt_gaze_scene_config"}
+
+
+columns = {
+    "INTERACTION": "A",
+    "USER": "B",
+    "RUN": "C",
+    "SPEECH": "D",
+    "GAZE": "E",
+    "SYNCHRONIZED": "F",
+    "QUERY_OBJECTS": "G",
+    "QUERY_AGENTS": "H",
+    "REASONING": "I",
+    "SPEAKING": "J",
+}
+
+columns_width = 20
+excluded_objects = ['hand_left_robot', 'hand_right_robot']
+
+
+# Function to load speech data from a JSON file
+def load_speech_data(speech_data_file):
+    try:
+        # Check if the file exists
+        if not os.path.exists(speech_data_file):
+            print(f"File not found: {speech_data_file}")
+            return None
+
+        # Open and load the JSON file
+        with open(speech_data_file, 'r') as f:
+            speech_data = json.load(f)
+        return speech_data
+
+    except Exception as e:
+        print(f"Error loading file {speech_data_file}: {e}")
+        return None
+
+
+
+# Function to load gaze data from a JSON file
+def load_gaze_data(gaze_data_file):
+    try:
+        if not os.path.exists(gaze_data_file):
+            print(f"File not found: {gaze_data_file}")
+            return None
+        with open(gaze_data_file, 'r') as f:
+            gaze_data = json.load(f)
+        return gaze_data
+    except Exception as e:
+        print(f"Error loading file {gaze_data_file}: {e}")
+        return None
+
+
+# Create a new Excel workbook and select the active worksheet
+wb = Workbook()
+ws = wb.active
+ws.title = "Generated Dialogues Scheme"
+
+# Add hierarchical headers
+ws.merge_cells("A1:J1")  # Merge for "GENERATED DIALOGUES"
+ws["A1"] = "GENERATED DIALOGUES"
+ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+
+ws.merge_cells("A2:D2")  # Merge for "INPUT MODE"
+ws["A2"] = "INPUT MODE"
+ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
+
+ws.merge_cells("E2:J2")  
+ws["E2"] = input_mode
+ws["E2"].alignment = Alignment(horizontal="center", vertical="center")
+
+ws.merge_cells("A3:D3")  # Merge for "SCENARIO"
+ws["A3"] = "SCENARIO"
+ws["A3"].alignment = Alignment(horizontal="center", vertical="center")
+
+
+ws.merge_cells("E3:J3")  
+ws["E3"] = scenario
+ws["E3"].alignment = Alignment(horizontal="center", vertical="center")
+
+# Add sub-headers for other columns
+start_row = 4
+end_row = 5
+ws.merge_cells(f"{columns['INTERACTION']}{start_row}:{columns['INTERACTION']}{end_row}")
+ws[f"{columns['INTERACTION']}{start_row}"] = 'INTERACTION'
+
+ws.merge_cells(f"{columns['USER']}{start_row}:{columns['USER']}{end_row}")
+ws[f"{columns['USER']}{start_row}"] = 'USER'
+
+ws.merge_cells(f"{columns['RUN']}{start_row}:{columns['RUN']}{end_row}")
+ws[f"{columns['RUN']}{start_row}"] = 'RUN'
+
+ws.merge_cells(f"{columns['SPEECH']}{start_row}:{columns['SYNCHRONIZED']}{start_row}")
+ws[f"{columns['SPEECH']}{start_row}"] = 'INPUT'
+ws[f"{columns['SPEECH']}{start_row}"].alignment = Alignment(horizontal="center", vertical="center")
+ws[f"{columns['SPEECH']}{end_row}"] = 'SPEECH'
+ws[f"{columns['GAZE']}{end_row}"] = 'GAZE'
+ws[f"{columns['SYNCHRONIZED']}{end_row}"] = 'SYNCHRONIZED'
+
+ws.merge_cells(f"{columns['QUERY_OBJECTS']}{start_row}:{columns['QUERY_OBJECTS']}{end_row}")
+ws[f"{columns['QUERY_OBJECTS']}{start_row}"] = 'QUERY_OBJECTS'
+
+
+ws.merge_cells(f"{columns['QUERY_AGENTS']}{start_row}:{columns['QUERY_AGENTS']}{end_row}")
+ws[f"{columns['QUERY_AGENTS']}{start_row}"] = 'QUERY_AGENTS'
+
+ws.merge_cells(f"{columns['REASONING']}{start_row}:{columns['REASONING']}{end_row}")
+ws[f"{columns['REASONING']}{start_row}"] = 'REASONING'
+
+ws.merge_cells(f"{columns['SPEAKING']}{start_row}:{columns['SPEAKING']}{end_row}")
+ws[f"{columns['SPEAKING']}{start_row}"] = 'SPEAKING'
+
+
+for column in columns.values():
+    ws.column_dimensions[column].width = columns_width
+
+
+# Define the users and interactions
+users = [1, 2, 3, 4, 5]
+
+# Generate all combinations of dialogues
+all_dialogues = list(product(users, repeat=3))
+
+row = 6
+
+print_emojis = True
+user_name = "Elisabeth"
+llm_handler = py_LLM_handler.LLMHandler(config_module=config_files_dict[input_mode])
+SIM = llm_handler.get_simulation()
+SIM.run()
+
+
+for run, dialogue in enumerate(all_dialogues):
+    print(dialogue)
+    for n in range(3):
+        ws[f"{columns['INTERACTION']}{row}"] = n + 1
+        ws[f"{columns['USER']}{row}"] = dialogue[n]
+        
+        user_dir = f"{main_dir}/user{dialogue[n]}"
+        print(user_dir)
+        
+        user_scenario_dir = f"{user_dir}/{scenario}"
+        
+        print(user_scenario_dir)
+        
+        user_interaction_dir = f"{user_scenario_dir}/{scenario}{n + 1}"
+        
+        print(user_interaction_dir)
+        
+        speech_file = f"{user_interaction_dir}/speech_data/Elisabeth.json"
+        
+        speech_data = load_speech_data(speech_file)
+        
+        
+        speech_input = ""
+        if speech_data:
+            speech_input = " ".join(speech_data["transcript"])
+            
+            start_time = speech_data["listening_start_time"]
+            
+            word_data = [(word_info['word'], word_info['start_time'], word_info['end_time']) for word_info in speech_data['words']]
+
+        
+        gaze_data_file = f"{user_interaction_dir}/raw_gaze_data/Elisabeth.json"
+        # Load pre-recorded gaze and speech data
+        user_raw_gaze_data = load_gaze_data(gaze_data_file)
+        
+        
+        gaze_history = ""
+        if user_raw_gaze_data:
+            gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], start_time, 15.0,8.0, 8.0, excluded_objects, 5.0, 0.5, 0.04)
+        
+        ws[f"{columns['RUN']}{row}"] = run + 1
+        ws[f"{columns['SPEECH']}{row}"] = speech_input
+        ws[f"{columns['GAZE']}{row}"] = str(gaze_history)
+        
+        if speech_input and gaze_history:
+            
+            if not input_mode.startswith("SYNC"):
+                ws[f"{columns['SYNCHRONIZED']}{row}"] = "Not Applicable"
+            else:
+                ws[f"{columns['SYNCHRONIZED']}{row}"] = "Synchronized"
+
+            if input_mode == "SPEECH+SCENE":
+                print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{speech_input}")
+                llm_handler.play_with_functions_synchronized(speech_input, person_name=user_name)
+            
+            elif input_mode == "GAZE+SCENE":
+                print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
+                llm_handler.play_with_functions_synchronized(gaze_history, person_name=user_name)
+                
+            elif input_mode == "ASYNC GAZE+SPEECH+SCENE":
+                
+                print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{speech_input}")
+                print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
+                llm_handler.play_with_functions_gaze_history_speech(speech_input=speech_input, gaze_history=gaze_history, person_name=user_name)
+                print("LAST CALL RESPONSES: ")
+                for message in llm_handler.messages_current_call:
+
+                    if not isinstance(message, ChatCompletionMessage):
+                        print(message)
+                        print("-----------------------------------")
+                        if message.get("name") == "query_objects":
+                            ws[f"{columns['QUERY_OBJECTS']}{row}"] = message.get("content")
+                        if message.get("name") == "query_agents":
+                            ws[f"{columns['QUERY_AGENTS']}{row}"] = message.get("content")
+                        if message.get("name") == "reasoning":
+                            reasoning_msg = message.get("content")
+                            reasoning_msg = reasoning_msg.replace("You are about to take the following action: ", "", 1).strip() 
+                            ws[f"{columns['REASONING']}{row}"] = reasoning_msg
+                        if message.get("name") == "speak":
+                            speak_msg = message.get("content")
+                            speak_msg = speak_msg.replace("You said to Elisabeth: ", "", 1).strip()
+                            ws[f"{columns['SPEAKING']}{row}"] = speak_msg
+                            
+                llm_handler.messages_current_call = []
+            elif input_mode == "SYNC GAZE+SPEECH+SCENE":
+                input_data = pyGaze.merge_gaze_word_intervals(objects_timestamps, word_data)
+                print(f"{llm_handler._user_emojis if print_emojis else ''}{input_data}")
+                print(f"{llm_handler._user_speech_emojis if print_emojis else ''}{speech_input}")
+                print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{objects_timestamps}")
+                llm_handler.play_with_functions_synchronized(input=input_data, person_name=user_name)
+            else:
+                print("Invalid input mode. Please select one of the following: 'speech_only', 'gaze_only', 'gaze_history_speech', 'synchronized_gaze_speech'")            
+
+        row += 1
+    print("New dialogue show we reset the LLM handler")
+    llm_handler.reset()   
+
+    
+
+
+
+# # Create a formatted list of dialogues
+# formatted_dialogues = [
+#     {
+#         "Interaction 1": dialogue[0],
+#         "Interaction 2": dialogue[1],
+#         "Interaction 3": dialogue[2]
+#     }
+#     for dialogue in all_dialogues
+# ]
+
+
+# # Convert the list to a DataFrame
+# dialogues_df = pd.DataFrame(formatted_dialogues)
+
+# # Save to an Excel file
+# output_file = "generated_dialogues.xlsx"
+# dialogues_df.to_excel(output_file, index=False)
+
+# print(f"Excel file '{output_file}' created successfully!")
+output_file = input_mode+"_"+scenario+"_"+".xlsx"
+wb.save(output_file)
+
+print(f"Excel file '{output_file}' created successfully!")
