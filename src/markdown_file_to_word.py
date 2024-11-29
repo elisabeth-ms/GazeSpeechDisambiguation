@@ -32,7 +32,6 @@ def markdown_to_word(dir,md_file_name, output_docx_name, max_width_in_inches=6.0
     doc = Document()
     
     for element in soup.contents:
-        print("element: ", element.name)
         if element.name == 'h1':
             doc.add_heading(element.text, level=1)
         elif element.name == 'h2':
@@ -63,6 +62,6 @@ def markdown_to_word(dir,md_file_name, output_docx_name, max_width_in_inches=6.0
     doc.save(output_docx)
 
 # Example usage
-main_dir_path = '/hri/storage/user/emenende/myNotes/dialogues/22_11_2024/dialogue1'
+main_dir_path = '/hri/storage/user/emenende/myNotes/dialogues/22_11_2024/dialogue10'
 
 markdown_to_word(os.path.join(main_dir_path),'interaction_summary.md','output.docx')

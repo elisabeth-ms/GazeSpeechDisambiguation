@@ -53,7 +53,8 @@ class LLMHandler:
         self.messages = [
             {"role": "system", "content": self.character},
         ]
-
+        self.messages_current_call = [
+        ]
         self._user_speech_emojis = "🧑‍🎙️  SPEECH INPUT: "
         self._user_gaze_emojis = "🧑👀 GAZE INPUT: "
         self._user_emojis = "🧑 INPUT: "
@@ -100,6 +101,8 @@ class LLMHandler:
         self.messages.append(user_message)
         response = self._query_llm(self.messages)
         self.messages.append(response.choices[0].message)
+        
+        self.messages_current_call.append(response.choices[0].message)
 
           # run with function calls as long as necessary
         while response.choices[0].message.tool_calls:
@@ -138,11 +141,20 @@ class LLMHandler:
                             "tool_call_id": tc.id,
                         }
                     )
+                    self.messages_current_call.append(
+                        {
+                            "role": "tool",
+                            "name": func,
+                            "content": fn_res,
+                            "tool_call_id": tc.id,
+                        }
+                    )
             if SIM.hasBeenStopped:
                 break
             else:
                 response = self._query_llm(self.messages)
                 self.messages.append(response.choices[0].message)
+                self.messages_current_call.append(response.choices[0].message)
 
         if SIM.hasBeenStopped:
             SIM.hasBeenStopped = False
@@ -168,6 +180,7 @@ class LLMHandler:
         self.messages.append(user_message)
         response = self._query_llm(self.messages)
         self.messages.append(response.choices[0].message)
+        self.messages_current_call.append(response.choices[0].message)
 
           # run with function calls as long as necessary
         while response.choices[0].message.tool_calls:
@@ -207,11 +220,20 @@ class LLMHandler:
                             "tool_call_id": tc.id,
                         }
                     )
+                    self.messages_current_call.append(
+                        {
+                            "role": "tool",
+                            "name": func,
+                            "content": fn_res,
+                            "tool_call_id": tc.id,
+                        }
+                    )
             if SIM.hasBeenStopped:
                 break
             else:
                 response = self._query_llm(self.messages)
                 self.messages.append(response.choices[0].message)
+                self.messages_current_call.append(response.choices[0].message)
 
         if SIM.hasBeenStopped:
             SIM.hasBeenStopped = False
@@ -244,3 +266,9 @@ class LLMHandler:
         self.messages.append(response.choices[0].message)
         # print(self.messages)
         return self.messages
+    
+    def reset(self) -> None:
+        self.messages = [
+            {"role": "system", "content": self.character},
+        ]
+        print(f"📝 Message history reset.")

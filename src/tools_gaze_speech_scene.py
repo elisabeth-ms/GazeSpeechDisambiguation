@@ -59,7 +59,7 @@ from pyAffaction import (
     setLogLevel,
 )
 
-recordTransformationsEnabled = True
+recordTransformationsEnabled = False
 addResourcePath(CFG_ROOT_DIR)
 addResourcePath(CFG_DIR)
 print(f"{CFG_DIR=}")
@@ -74,7 +74,7 @@ SIMULATION.verbose = False
 SIMULATION.maxGazeAngleDiff = 120.0
 SIMULATION.playTransformations = False
 SIMULATION.recordTransformations = recordTransformationsEnabled
-SIMULATION.xmlFileName = "g_example_cola_bottle_two_glasses_bowl_cereal.xml"
+SIMULATION.xmlFileName = "g_example_drink_scenario.xml"
 SIMULATION.init(True)
 SIMULATION.addTTS("native")
 camera_name = "camera_0" 
@@ -84,6 +84,18 @@ SIMULATION.addLandmarkZmq()
 ARG1 = True
 
 
+def query_objects() -> str:
+    """
+    Query all objects that are available in the scene. You can see all these objects.
+
+    :return: Result message.
+    """
+    result = SIMULATION.get_objects()
+    if not result:
+        return "No objects were observed."
+    
+    objects_no_camera = [obj for obj in result["objects"] if obj != "camera"]
+    return "Following objects were observed: " + ", ".join(objects_no_camera) + "."
 
 
 def query_agents() -> str:
@@ -96,6 +108,44 @@ def query_agents() -> str:
     if not result:
         return "No agents were observed."
     return "The following agents, including yourself, were observed: " + ", ".join(result["agents"]) + "."
+
+# def query_all_close_objects(threshold: float = 0.5) -> str:
+#     """
+#     Query all pairs of objects that are spatially close to each other.
+
+#     :param threshold: The maximum distance to consider objects as "close." Defaults to 0.5 meters.
+#     :return: Result message.
+#     """
+    
+#     # Initialize the list of objects to skip
+#     agents = SIMULATION.get_agents()["agents"]
+#     skip_objects = ["camera", "table"] + agents 
+    
+#     distances_json = SIMULATION.get_pairwise_distances()
+
+#     if not distances_json:
+#         return "No objects were observed in the scene."
+
+#     # Find close object pairs
+#     close_pairs = []
+#     for obj_a, distances in distances_json.items():
+#         if obj_a in skip_objects or obj_a.startswith("Hand") or obj_a.startswith("hand"):
+#             continue
+#         for obj_b, distance in distances.items():
+#             # Avoid duplicates (A -> B and B -> A)
+#             if obj_b in skip_objects or obj_b.startswith("Hand") or obj_b.startswith("hand"):
+#                 continue
+#             if obj_a < obj_b and distance <= threshold:
+#                 close_pairs.append((obj_a, obj_b))
+
+#     # Format the result
+#     if not close_pairs:
+#         return f"No objects were found to be within {threshold} meters of each other."
+
+#     result = "The following objects are close to each other:\n"
+#     result += "\n".join(f"{pair[0]} is close to {pair[1]}" for pair in close_pairs)
+#     return result
+
 
 def speak(person_name: str, text: str) -> str:
     """
@@ -120,6 +170,7 @@ def reasoning(reason: str) -> str:
     :return: Result message.
     """
     return f"You are about to take the following action: {reason}."
+
 
 # def is_person_busy_or_idle(person_name: str) -> str:
 #     """
@@ -231,7 +282,6 @@ def reasoning(reason: str) -> str:
 #     if res.startswith("SUCCESS"):
 #         return f"You poured {source_container_name} into {target_container_name}."
 #     return f"You were not able to pour {source_container_name} into {target_container_name}."
-
 
 
 

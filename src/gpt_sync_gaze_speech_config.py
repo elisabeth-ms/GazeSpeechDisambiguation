@@ -57,7 +57,7 @@ REMEMBER YOUR RULES!!
 """
 
 # Agent capabilities
-tool_module = "tools_gaze_speech_incremental_learning_objects"
+tool_module = "tools_gaze_speech"
 
 
 # 1. Allways start gathering all available information related to the request.

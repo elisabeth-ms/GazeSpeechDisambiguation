@@ -68,6 +68,7 @@ def main():
     
     user_name = "Elisabeth"
     
+
     # If there are multiple users, we just speak the object name for the user specified in user_name
     try:
         while True:

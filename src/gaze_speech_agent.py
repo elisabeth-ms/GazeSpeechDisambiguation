@@ -185,6 +185,10 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
         if key == 's':
             if not stream.running:
                 stream.running = True
+                SIM.execute(f"speak I'm listening...")
+                time.sleep(0.2)
+
+
                 print("\nStarting streaming...")
                 gaze_start_time = getWallclockTime()
                 stream.start_streaming()
@@ -275,9 +279,13 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
         elif key == 'e':
             if stream.running:
                 print("\nStopping streaming before exiting...")
+
+
                 stream.running = False
                 stream.processing_thread.join()
                 stream.stop_streaming()
+                # SIM.execute(f"speak Got it...")
+                # time.sleep(0.2)
             print("\nExiting...")
             os._exit(0)  # Force exit
         else:
@@ -286,7 +294,7 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
 
 
 input_mode = "gaze_history_speech" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
-config_file = "gpt_gaze_speech_config"
+config_file = "gpt_gaze_speech_scene_config"
 
 SIM = None
 speech_directory_path = None

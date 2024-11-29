@@ -43,15 +43,15 @@ recordTransformationsEnabled = None
 input_mode = "gaze_history_speech" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
 config_file = "gpt_gaze_speech_config"
 
-main_dir_path = '/hri/storage/user/emenende/interaction_recordings'
+main_dir_path = '/hri/localdisk/emende/interaction_recordings/27_11_2024'
 
 # Initialize dialogue and interaction counters
-dialogue_number = 194 # Adjust this based on which dialogue you want to load
+dialogue_number = 2 # Adjust this based on which dialogue you want to load
 interaction_number = 1  # Adjust this based on which interaction to start with
 
 
-main_dir = 'interaction_recordings'
-main_dir_path = os.path.join('/hri/storage/user/emenende', main_dir)
+main_dir = 'interaction_recordings/27_11_2024'
+main_dir_path = os.path.join('/hri/localdisk/emende', main_dir)
 excluded_objects = ['hand_left_robot', 'hand_right_robot']
 
 

@@ -339,7 +339,7 @@ def main():
 
     print_emojis = True
     person_name = "Elisabeth"
-    llm_handler = LLMHandler(config_module="gpt_time_synchronized_gaze_speech_config")
+    llm_handler = LLMHandler(config_module="gpt_gaze_speech_scene_config")
     global SIM
 
     SIM.run()

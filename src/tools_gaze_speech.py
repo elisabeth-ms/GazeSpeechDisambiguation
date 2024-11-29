@@ -83,21 +83,6 @@ SIMULATION.addLandmarkZmq()
 # Tools
 ARG1 = True
 
-
-def query_objects() -> str:
-    """
-    Query all objects that are available in the scene. You can see all these objects.
-
-    :return: Result message.
-    """
-    result = SIMULATION.get_objects()
-    if not result:
-        return "No objects were observed."
-    
-    objects_no_camera = [obj for obj in result["objects"] if obj != "camera"]
-    return "Following objects were observed: " + ", ".join(objects_no_camera) + "."
-
-
 def query_agents() -> str:
     """
     Query all agents that are available in the scene, including yourself. You can see all these agents.
@@ -132,7 +117,6 @@ def reasoning(reason: str) -> str:
     :return: Result message.
     """
     return f"You are about to take the following action: {reason}."
-
 
 # def is_person_busy_or_idle(person_name: str) -> str:
 #     """
@@ -244,6 +228,7 @@ def reasoning(reason: str) -> str:
 #     if res.startswith("SUCCESS"):
 #         return f"You poured {source_container_name} into {target_container_name}."
 #     return f"You were not able to pour {source_container_name} into {target_container_name}."
+
 
 
 
