@@ -76,7 +76,7 @@ SIMULATION.playTransformations = False
 SIMULATION.recordTransformations = recordTransformationsEnabled
 SIMULATION.xmlFileName = "g_example_drink_scenario.xml"
 SIMULATION.init(True)
-SIMULATION.addTTS("native")
+SIMULATION.addTTS("piper_ryan")
 camera_name = "camera_0" 
 SIMULATION.addLandmarkZmq()
 
@@ -170,6 +170,14 @@ def reasoning(reason: str) -> str:
     :return: Result message.
     """
     return f"You are about to take the following action: {reason}."
+
+def required_objects(required_objects: str) -> str:
+    """
+    Yor provide the name of the objects the user requires. 
+    :param required_objects: Object names
+    :return: Result message.
+    """
+    return f"The objects required by the user are: {required_objects}"
 
 
 # def is_person_busy_or_idle(person_name: str) -> str:

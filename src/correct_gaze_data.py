@@ -17,9 +17,9 @@ def load_gaze_data(gaze_data_file):
 
 
 
-start_time_change = 1732721543.941635 + 5.1 
+start_time_change = 1733321219.1598685 + 4.0
 
-end_time_change = 1732721543.941635 + 5.8
+end_time_change = 1733321219.1598685 + 5.8
 
 
 
@@ -36,12 +36,14 @@ for gaze in user_raw_gaze_data:
         objects = gaze["objects"]
         print("Found gaze data within the time range: ", objects[0]["name"])
         # Correct the object name
+        index_replacement = 0
         for i, obj in enumerate(objects):
-            previous_hit = copy.copy(objects[0]["name"])
-            if obj["name"] == "bowl":
-                obj["name"] = previous_hit
-            objects[0]["name"] = "bowl"
-            
+            print(obj)
+            if obj["name"] == "bottle_of_orange_juice":
+                index_replacement = i
+                obj["angle_diff"] += 5.0
+                
+
 
         
 

@@ -185,8 +185,8 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
         if key == 's':
             if not stream.running:
                 stream.running = True
-                SIM.execute(f"speak I'm listening...")
-                time.sleep(0.2)
+                # SIM.execute(f"speak I'm listening...")
+                # time.sleep(0.4)
 
 
                 print("\nStarting streaming...")

@@ -60,7 +60,7 @@ def main():
     SIM.noLimits = False
     SIM.verbose = False
     SIM.maxGazeAngleDiff = 120.0
-    SIM.xmlFileName = "g_example_drink_scenario.xml"
+    SIM.xmlFileName = "g_example_breakfast_scenario.xml"
     SIM.playTransformations = True
     SIM.recordTransformations = True
     SIM.init(True)

@@ -41,7 +41,7 @@ recordTransformationsEnabled = None
 
 
 input_mode = "gaze_history_speech" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
-config_file = "gpt_gaze_speech_config"
+config_file = "gpt_gaze_speech_scene_config"
 
 main_dir_path = '/hri/localdisk/emende/interaction_recordings/27_11_2024'
 

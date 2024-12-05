@@ -287,8 +287,8 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
                 angle_diff_data[obj['name']].append(obj['angle_diff'])
 
         # If no valid object was chosen, but the gaze velocity is below the off-target threshold, mark it as off-target
-        if not valid_objects and entry['gaze_velocity'] < off_target_velocity_threshold:
-            valid_objects = ['off-target gaze']
+        # if not valid_objects and entry['gaze_velocity'] < off_target_velocity_threshold:
+        #     valid_objects = ['off-target gaze']
 
         # Initialize the first object and gaze start time
         if not current_objects and not gaze_start_time:

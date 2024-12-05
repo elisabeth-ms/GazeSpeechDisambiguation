@@ -58,7 +58,7 @@ save_dir = "/hri/localdisk/emende/generated_dialogues"+"/"+scenario
 output_file = input_mode+"_"+scenario+".xlsx"
 output_file_path = os.path.join(save_dir,output_file)
 
-    
+
 
 
 config_files_dict = {
@@ -84,6 +84,7 @@ columns = {
     "DESIRED SPEAKING": "L",
     "REASONING": "M",
     "SPEAKING": "N",
+    "REQUIRED OBJECTS": "O", 
 }
 
 columns_width = {
@@ -101,6 +102,7 @@ columns_width = {
     "DESIRED SPEAKING": 50,
     "REASONING": 50,
     "SPEAKING": 50,
+    "REQUIRED OBJECTS": 50,
 }
 
 excluded_objects = ['hand_left_robot', 'hand_right_robot']
@@ -222,6 +224,9 @@ if not os.path.exists(output_file_path):
 
     ws.merge_cells(f"{columns['SPEAKING']}{start_row}:{columns['SPEAKING']}{end_row}")
     ws[f"{columns['SPEAKING']}{start_row}"] = 'SPEAKING'
+    
+    ws.merge_cells(f"{columns['REQUIRED OBJECTS']}{start_row}:{columns['REQUIRED OBJECTS']}{end_row}")
+    ws[f"{columns['REQUIRED OBJECTS']}{start_row}"] = 'REQUIRED OBJECTS'
 
     for key, value in columns.items():
         ws.column_dimensions[value].width = columns_width[key]
@@ -230,7 +235,7 @@ else:
     ws = wb["Generated Dialogues Scheme"]    
 
 # Define the users and interactions
-users = [1, 2, 3, 4, 5]
+users = [1, 2, 3, 4, 5, 6]
 
 # Generate all combinations of dialogues
 all_dialogues = list(product(users, repeat=3))
@@ -243,7 +248,7 @@ llm_handler = py_LLM_handler.LLMHandler(config_module=config_files_dict[input_mo
 SIM = llm_handler.get_simulation()
 SIM.run()
 
-update_users = [1,2]
+update_users = [1,2,3,4,5,6]
 
 
 for run, dialogue in enumerate(all_dialogues):
@@ -252,8 +257,12 @@ for run, dialogue in enumerate(all_dialogues):
     for n in range(3):
         ws[f"{columns['INTERACTION']}{row}"] = n + 1
         ws[f"{columns['USER']}{row}"] = dialogue[n]
-        
-        if ws[f"{columns['RUN']}{row}"].value != None:
+        cell_value = ws[f"{columns['RUN']}{row}"].value
+
+        # Debugging: print the raw value and its type
+        # print(f"Row {row}, Column RUN, Raw Value: {cell_value}, Type: {type(cell_value)}")
+        if cell_value != None or 6 not in dialogue:
+            row += 1
             continue
         
         if dialogue[0] in update_users and dialogue[1] in update_users and dialogue[2] in update_users:
@@ -304,7 +313,7 @@ for run, dialogue in enumerate(all_dialogues):
             
             gaze_history = ""
             if user_raw_gaze_data:
-                gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], start_time, 15.0,8.5, 8.5, excluded_objects, 5.0, 0.5, 0.04)
+                gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], start_time, 15.0,8.0, 8.0, excluded_objects, 5.0, 0.5, 0.08)
             
             ws[f"{columns['RUN']}{row}"] = run + 1
             ws[f"{columns['SPEECH']}{row}"] = speech_input
@@ -332,7 +341,13 @@ for run, dialogue in enumerate(all_dialogues):
                             speak_msg = message.get("content")
                             speak_msg = speak_msg.replace("You said to Elisabeth: ", "", 1).strip()
                             ws[f"{columns['SPEAKING']}{row}"] = speak_msg
-                
+                        if message.get("name") == "required_objects":
+                            required_objects_msg = message.get("content")
+                            required_objects_msg = required_objects_msg.replace("The objects required by the user are: ", "", 1).strip()
+                            ws[f"{columns['REQUIRED OBJECTS']}{row}"] = required_objects_msg
+
+                llm_handler.messages_current_call = []
+
             if input_mode == "GAZE+SCENE" and gaze_history:
                 ws[f"{columns['SPEECH']}{row}"] = "Not Applicable"
                 print(f"{llm_handler._user_gaze_emojis if print_emojis else ''}{gaze_history}")
@@ -355,7 +370,13 @@ for run, dialogue in enumerate(all_dialogues):
                             speak_msg = message.get("content")
                             speak_msg = speak_msg.replace("You said to Elisabeth: ", "", 1).strip()
                             ws[f"{columns['SPEAKING']}{row}"] = speak_msg
-                            
+                        if message.get("name") == "required_objects":
+                            required_objects_msg = message.get("content")
+                            required_objects_msg = required_objects_msg.replace("The objects required by the user are: ", "", 1).strip()
+                            ws[f"{columns['REQUIRED OBJECTS']}{row}"] = required_objects_msg
+
+                llm_handler.messages_current_call = []
+            
             if not input_mode.startswith("SYNC"):
                 ws[f"{columns['SYNCHRONIZED']}{row}"] = "Not Applicable"    
             
@@ -386,7 +407,11 @@ for run, dialogue in enumerate(all_dialogues):
                                 speak_msg = message.get("content")
                                 speak_msg = speak_msg.replace("You said to Elisabeth: ", "", 1).strip()
                                 ws[f"{columns['SPEAKING']}{row}"] = speak_msg
-                                
+                            if message.get("name") == "required_objects":
+                                required_objects_msg = message.get("content")
+                                required_objects_msg = required_objects_msg.replace("The objects required by the user are: ", "", 1).strip()
+                                ws[f"{columns['REQUIRED OBJECTS']}{row}"] = required_objects_msg
+
                     llm_handler.messages_current_call = []
                 elif input_mode == "SYNC GAZE+SPEECH+SCENE" or input_mode == "SYNC GAZE+SPEECH":
                     input_data = pyGaze.merge_gaze_word_intervals(objects_timestamps, word_data)
@@ -414,11 +439,20 @@ for run, dialogue in enumerate(all_dialogues):
                                 speak_msg = message.get("content")
                                 speak_msg = speak_msg.replace("You said to Elisabeth: ", "", 1).strip()
                                 ws[f"{columns['SPEAKING']}{row}"] = speak_msg
-                
+                            if message.get("name") == "required_objects":
+                                required_objects_msg = message.get("content")
+                                required_objects_msg = required_objects_msg.replace("The objects required by the user are: ", "", 1).strip()
+                                ws[f"{columns['REQUIRED OBJECTS']}{row}"] = required_objects_msg
+
+                    llm_handler.messages_current_call = []
+
 
         row += 1
+    # if row >=650:
+    #     break
     print("New dialogue show we reset the LLM handler")
-    llm_handler.reset()   
+    llm_handler.reset()
+
 
     
 
