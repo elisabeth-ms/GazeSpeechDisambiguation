@@ -8,8 +8,14 @@ def merge_gaze_word_intervals(
         gaze_data: List[Tuple[List[str], float, float]],
         word_data: List[Tuple[str, float, float]]
     ) -> Dict[str, Any]:
+    """Merges gaze data and word data into a single structure with aligned time intervals.
+    Parameters:
+        gaze_data (List[Tuple[List[str], float, float]]): List of gaze data entries, each containing a list of objects, start time, and end time.
+        word_data (List[Tuple[str, float, float]]): List of word data entries, each containing a word, start time, and end time.
+    Returns:
+        Dict[str, Any]: A dictionary containing the merged rows with time intervals, current word, and current gaze objects.
+    """
 
-    # Step 1: Gather all unique boundaries (start and end times of words and gaze segments)
     boundaries = sorted(set(
         [start for _, start, _ in gaze_data] +
         [end for _, _, end in gaze_data] +
@@ -17,25 +23,22 @@ def merge_gaze_word_intervals(
         [end for _, _, end in word_data]
     ))
 
-    # print("Boundaries: ", boundaries)
     merged_rows = []
     for i in range(len(boundaries) - 1):
         start, end = boundaries[i], boundaries[i + 1]
         time_str = f"{start:.3f}-{end:.3f}"
 
-        # Find current word in this interval
         current_word = None
         for word, word_start, word_end in word_data:
             if word_start <= start < word_end:
                 current_word = word
-                break  # Only take the first word found in this interval
+                break 
         
-          # Find current gaze objects in this interval
         current_gaze_objects = []
         for gaze_objects, gaze_start, gaze_end in gaze_data:
             if gaze_start <= start < gaze_end:
                 current_gaze_objects = gaze_objects
-                break  # Only take the first gaze objects found in this interval
+                break  
 
         merged_rows.append([time_str, current_word, [current_gaze_objects] if current_gaze_objects else []])
     
@@ -100,21 +103,24 @@ def merge_gaze_word_intervals(
 
 def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_threshold=20.0, angle_diff_threshold=15.0,
                          angle_diff_xz_threshold=5.0, excluded_objects=[], off_target_velocity_threshold=5.0,
-                         off_target_duration_threshold=0.5):
+                         off_target_duration_threshold=0.5, minimum_fixation_duration=0.08):
     """
     Computes the gaze history by determining the closest object the user is looking at based on angle differences.
+    Parameters:
+    
+        gaze_data (list): List of gaze data entries, each entry contains the time,head direction velocity, and a list of objects with angle differences.
+        start_time (float): The time when the gaze tracking started.
+        gaze_velocity_threshold (float): Maximum allowed gaze velocity to consider the gaze stable (default is 20.0).
+        angle_diff_threshold (float): The maximum allowed angle difference in 3D (default is 15.0 degrees).
+        angle_diff_xz_threshold (float): The maximum allowed angle difference in the vertical plane (default is 5.0 degrees).
+        excluded_objects (list): List of objects that should be ignored in the gaze history.
+        off_target_velocity_threshold (float): Gaze velocity threshold to determine off-target fixation (default is 5.0).
+        off_target_duration_threshold (float): Minimum duration to consider an off-target gaze (default is 0.5 seconds).
+        minimum_fixation_duration (float): Minimum duration to consider a gaze fixation (default is 0.08 seconds).
 
-    :param gaze_data: List of gaze data entries, each entry contains the time,head direction velocity, and a list of objects with angle differences.
-    :param start_time: The time when the gaze tracking started.
-    :param gaze_velocity_threshold: Maximum allowed gaze velocity to consider the gaze stable (default is 20.0).
-    :param angle_diff_threshold: The maximum allowed angle difference in 3D (default is 15.0 degrees).
-    :param angle_diff_xz_threshold: The maximum allowed angle difference in the vertical plane (default is 5.0 degrees).
-    :param excluded_objects: List of objects that should be ignored in the gaze history.
-    :param off_target_velocity_threshold: Gaze velocity threshold to determine off-target fixation (default is 5.0).
-    :param off_target_duration_threshold: Minimum duration to consider an off-target gaze (default is 0.5 seconds).
-
-    :return: A tuple of two lists - gaze history and object timestamps. 
-             Gaze history contains tuples of (object_name, gaze_duration), and object timestamps store (object_name, start_time, end_time).
+    Returns:
+        Tuple[list, list]: Gaze history and Object timestamps. 
+                           Gaze history contains tuples of (object_name, gaze_duration), and object timestamps store (object_name, start_time, end_time).
     """
     # List to store gaze history and object timestamps
     gaze_history = []
@@ -146,9 +152,10 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
                     pass
                 else:
                     # Store in the object history and timestamps
-                    gaze_history.append((current_object, gaze_duration))
-                    objects_timestamps.append(
-                        (current_object, gaze_start_time, current_time))
+                    if gaze_duration > minimum_fixation_duration:
+                        gaze_history.append((current_object, gaze_duration))
+                        objects_timestamps.append(
+                            (current_object, gaze_start_time, current_time))
                 
                 # Reset current object since we are no longer tracking a stable gaze
                 current_object = None
@@ -175,9 +182,10 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
         if object_name == 'camera':
             object_name = 'Johnnie'
 
+        """ Remove off-target gaze because it generates a lot of confusion for the gpt agent"""
         # If no valid object was chosen, but the gaze velocity is below the off-target threshold, mark it as off-target
-        if object_name is None and entry['gaze_velocity'] < off_target_velocity_threshold:
-            object_name = 'off-target gaze'
+        # if object_name is None and entry['gaze_velocity'] < off_target_velocity_threshold:
+        #     object_name = 'off-target gaze'
 
         # Initialize the first object and gaze start time
         if current_object is None and gaze_start_time is None:
@@ -197,9 +205,10 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
                 pass
             else:
                 # Store in the object history and timestamps
-                gaze_history.append((current_object, gaze_duration))
-                objects_timestamps.append(
-                    (current_object, gaze_start_time, current_time))
+                if gaze_duration > minimum_fixation_duration:
+                    gaze_history.append((current_object, gaze_duration))
+                    objects_timestamps.append(
+                        (current_object, gaze_start_time, current_time))
 
             # Switch to the new object and update the start time
             current_object = object_name
@@ -208,12 +217,15 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
     # Handle the last object gazed at (after the loop ends)
     if current_object is not None and gaze_start_time is not None:
         gaze_duration = current_time - gaze_start_time
-        gaze_history.append((current_object, gaze_duration))
-        objects_timestamps.append(
-            (current_object, gaze_start_time, current_time))
+        if gaze_duration > minimum_fixation_duration:
+            gaze_history.append((current_object, gaze_duration))
+            objects_timestamps.append(
+                (current_object, gaze_start_time, current_time))
+
     
     # Return the gaze history and object timestamps
     return gaze_history, objects_timestamps
+
 
 def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_velocity_threshold=20.0, angle_diff_threshold=15.0,
                          angle_diff_xz_threshold=5.0, excluded_objects=[], off_target_velocity_threshold=5.0,

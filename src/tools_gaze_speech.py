@@ -74,9 +74,9 @@ SIMULATION.verbose = False
 SIMULATION.maxGazeAngleDiff = 120.0
 SIMULATION.playTransformations = False
 SIMULATION.recordTransformations = recordTransformationsEnabled
-SIMULATION.xmlFileName = "g_example_drink_scenario.xml"
+SIMULATION.xmlFileName = "g_example_breakfast_scenario.xml"
 SIMULATION.init(True)
-SIMULATION.addTTS("piper_norman")
+SIMULATION.addTTS("piper")
 camera_name = "camera_0" 
 SIMULATION.addLandmarkZmq()
 

@@ -27,9 +27,9 @@ class MissingEnvironmentVariable(Exception):
 input_mode = "ASYNC GAZE+SPEECH" # Options: "ASYNC GAZE+SPEECH+SCENE", "SYNC GAZE+SPEECH+SCENE", 
                                        # "ASYNC GAZE+SPEECH", "SYNC GAZE+SPEECH", "SPEECH+SCENE", "GAZE+SCENE"
 scenario = "Drink"
-data_dir = "/hri/localdisk/emende/generated_dialogues"+"/"+scenario+"/6_users"
+data_dir = "/hri/localdisk/emende/generated_dialogues"+"/"+"Winner-Take-All"+"/"+scenario
 
-data_file = input_mode+"_"+scenario+".xlsx"
+data_file = input_mode+"_"+scenario+"_winner"+".xlsx"
 data_file_path = os.path.join(data_dir,data_file)
 
 
