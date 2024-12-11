@@ -37,9 +37,13 @@ if "OPENAI_API_KEY" not in os.environ:
 
 
 
-# Cross-platform getch function to capture key presses
 def getch():
-    """Get a single character from standard input without echo."""
+    """
+    Captures a single character from standard input without displaying it on the console.
+
+    Returns:
+        str: The character pressed by the user.
+    """
     import sys
     if sys.platform.startswith('win'):
         import msvcrt
@@ -59,7 +63,20 @@ def getch():
 
 
 class MicrophoneStream:
+    """
+    Manages an audio stream for capturing microphone input and processing it for transcription.
+    """
+
     def __init__(self, rate=16000, chunk_size=1600, hints_filename=None, transcription_queue=None):
+        """
+        Initializes the MicrophoneStream with the given parameters.
+
+        Parameters:
+            rate (int): Sampling rate of the audio stream.
+            chunk_size (int): Size of audio chunks.
+            hints_filename (str): Path to the file containing transcription hints.
+            transcription_queue (queue.Queue): Shared queue for transcription results.
+        """
         self.rate = rate
         self.chunk_size = chunk_size
         self.q = queue.Queue()
@@ -80,12 +97,26 @@ class MicrophoneStream:
         else:
             self.context = None
 
+
     def audio_callback(self, indata, frames, time_info, status):
+        """
+        Callback function to handle incoming audio data from the microphone.
+
+        Parameters:
+            indata (ndarray): Incoming audio data.
+            frames (int): Number of frames in the audio data.
+            time_info (dict): Timestamp information of the audio data.
+            status (sounddevice.CallbackFlags): Status of the audio stream.
+        """
         if status:
             print(status, file=sys.stderr)
         self.q.put(indata.copy())
 
+
     def start_streaming(self):
+        """
+        Starts the audio stream for capturing microphone input.
+        """
         self.running = True
         self.stream = sd.InputStream(
             samplerate=self.rate,
@@ -97,7 +128,11 @@ class MicrophoneStream:
         self.stream.start()
         print("Audio stream started.")
 
+
     def stop_streaming(self):
+        """
+        Stops the audio stream and releases resources.
+        """
         self.running = False
         if self.stream:
             self.stream.stop()
@@ -105,7 +140,11 @@ class MicrophoneStream:
             self.stream = None
         print("Audio stream stopped.")
 
+
     def process_audio(self):
+        """
+        Processes the audio data from the stream and sends it to Google Cloud Speech-to-Text for transcription.
+        """
         client = speech.SpeechClient()
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -121,8 +160,10 @@ class MicrophoneStream:
             interim_results=False
         )
 
-        # Generator function to yield audio content
         def generator():
+            """
+            Generator to yield audio content from the queue for transcription.
+            """
             while self.running or not self.q.empty():  # Wait for queue to empty
                 try:
                     data = self.q.get(timeout=1)
@@ -141,6 +182,12 @@ class MicrophoneStream:
             print(f"Error during streaming recognition: {e}")
 
     def listen_print_loop(self, responses):
+        """
+        Processes the responses from the transcription service and stores the results.
+
+        Parameters:
+            responses (generator): Generator of transcription responses.
+        """
         for response in responses:
             if not response.results:
                 continue
@@ -164,21 +211,59 @@ class MicrophoneStream:
 
 
 class GazeDataManager:
+    """
+    Manages gaze data for all users in the system.
+    """
     def __init__(self, SIM):
+        """
+        Initializes the GazeDataManager with the given simulation instance.
+
+        Parameters:
+            SIM (Simulation): Simulation object.
+        """
         self.SIM = SIM
 
-    # Setter for objects_not_wanted
     def set_objects_not_wanted(self, objects_not_wanted):
+        """
+        Sets the list of objects to exclude from gaze data processing.
+
+        Parameters:
+            objects_not_wanted (list): List of objects to exclude.
+
+        Raises:
+            ValueError: If the input is not a list.
+        """
         if isinstance(objects_not_wanted, list):
             self.objects_not_wanted = objects_not_wanted
         else:
             raise ValueError("Objects not wanted must be a list")
 
     def get_all_users_raw_gaze_data(self):
+        """
+        Retrieves raw gaze data for all users from the simulation.
+
+        Returns:
+            dict: Raw gaze data for all users.
+        """
         return self.SIM.get_gaze_data()
 
 
 def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_speech_queue, plot_gaze_queue, print_emojis =False):
+    """
+    Listens for key presses to control audio streaming and interaction handling.
+
+    Parameters:
+        llm_handler (LLMHandler): Handler for the LLM interaction.
+        stream (MicrophoneStream): Instance of the audio streaming class.
+        gaze_manager (GazeDataManager): Instance of the gaze data manager.
+        transcription_queue (queue.Queue): Queue for storing transcription results.
+        plot_speech_queue (queue.Queue): Queue for storing speech data for plotting.
+        plot_gaze_queue (queue.Queue): Queue for storing gaze data for plotting.
+        print_emojis (bool): Whether to print emojis for input modes.
+
+    Returns:
+        None
+    """
     print("Press 's' to start streaming, 'f' to stop streaming, 'e' to exit.")
     while True:
         key = getch()
@@ -293,6 +378,9 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
 
 
 
+""" Change the input_mode variable to select the desired input mode and config_file to select the desired configuration file. """
+
+
 input_mode = "gaze_history_speech" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
 config_file = "gpt_gaze_speech_scene_config"
 
@@ -303,7 +391,8 @@ filtered_gaze_data_directory_path = None
 recordTransformationsEnabled = None
 
 main_dir = 'interaction_recordings'
-main_dir_path = os.path.join('/hri/localdisk/emende', main_dir)
+# Change this path to the desired directory where the interaction recordings will be saved
+main_dir_path = os.path.join('/hri/localdisk/emende', main_dir) 
 
 # main_dir_path = os.path.join('/hri/storage/user/emenende', main_dir)
 
