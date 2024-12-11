@@ -16,7 +16,15 @@ from function_analyzer import FunctionAnalyzer
 
 class LLMHandler:
     def __init__(self, config_module: str = "gpt_gaze_speech_config"):
-        # Dynamic config loading
+        """
+        Initializes the LLMHandler class, which manages GPT interactions and tool function resolutions.
+
+        Parameters:
+            config_module (str): Name of the configuration module to load dynamically.
+
+        Returns:
+            None
+        """
         config = importlib.import_module(config_module)
         tool_module = importlib.import_module(config.tool_module)
         tools = {
@@ -61,6 +69,12 @@ class LLMHandler:
         print("🤖 SYSTEM PROMPT: ",  self.character)
 
     def get_simulation(self):
+        """
+        Retrieves the current simulation instance.
+
+        Returns:
+            object: Simulation instance.
+        """
         return self.SIM
 
 
@@ -68,6 +82,17 @@ class LLMHandler:
                    messages,
                    tool_choice: Union[Literal["none", "auto"]] = "auto",
                    retries: int =3,):
+        """
+        Queries the GPT model with provided messages and tool descriptions.
+
+        Parameters:
+            messages (list): List of messages to send to GPT.
+            tool_choice (str): Tool execution mode ("none" or "auto").
+            retries (int): Number of retries in case of failure.
+
+        Returns:
+            dict: GPT response.
+        """
         response, i = None, 0
 
         while True:
@@ -94,6 +119,17 @@ class LLMHandler:
     
 
     def play_with_functions_synchronized(self, input, person_name) -> None:
+        """
+        Handles GPT interactions with synchronized gaze + speech input, speech or and gaze alone.
+
+        Parameters:
+            input (str or json): Input from the user.
+            person_name (str): Name of the user providing the input.
+
+        Returns:
+            None
+        """
+        
         user_message = {
             "role": "user",
             "content":  f"{person_name}: Input: {input}"
@@ -172,7 +208,20 @@ class LLMHandler:
         if self.amnesic:
             self.reset()
 
+
     def play_with_functions_gaze_history_speech(self, speech_input, gaze_history, person_name) -> None:
+        
+        """
+        Handles GPT interactions with speech input and gaze history.
+
+        Parameters:
+            speech_input (str): Speech input from the user.
+            gaze_history (list): Gaze history in seconds.
+            person_name (str): Name of the user providing the input.
+
+        Returns:
+            None
+        """
         user_message = {
             "role": "user",
             "content":  f"{person_name}:  Speech input: {speech_input}. Gaze history (in seconds): {gaze_history}"
@@ -252,7 +301,16 @@ class LLMHandler:
             self.reset()
 
     def append_user_input(self, speech_input, gaze_history):
-        # Append the user speech input and gaze history to the messages
+        """
+        Appends user input, including speech and gaze history, to the message list for interaction with GPT.
+
+        Parameters:
+            speech_input (str): The user's speech input.
+            gaze_history (str): The user's gaze history represented as a string.
+
+        Returns:
+            None
+        """
         user_message = {
             "role": "user",
             "content": f"Speech input: {speech_input}. Gaze history (in seconds): {gaze_history}"
@@ -260,6 +318,12 @@ class LLMHandler:
         self.messages.append(user_message)
 
     def get_response(self):
+        """
+        Sends the current list of messages to the GPT model and appends the response to the message history.
+
+        Returns:
+            list: The updated list of messages, including the GPT response.
+        """
         # Get the GPT response
         response = self._query_llm(self.messages)
         message = response.choices[0].message
@@ -268,6 +332,13 @@ class LLMHandler:
         return self.messages
     
     def reset(self) -> None:
+        """
+        Resets the message history to its initial state, including the system's character prompt.
+
+        Returns:
+            None
+        """
+        
         self.messages = [
             {"role": "system", "content": self.character},
         ]

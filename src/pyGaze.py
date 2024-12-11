@@ -230,8 +230,27 @@ def compute_gaze_history_closest_object(gaze_data, start_time, gaze_velocity_thr
 def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_velocity_threshold=20.0, angle_diff_threshold=15.0,
                          angle_diff_xz_threshold=5.0, excluded_objects=[], off_target_velocity_threshold=5.0,
                          off_target_duration_threshold=0.5, minimum_fixation_duration = 0.05, end_time=None):
+    
+    """
+    Computes a detailed gaze history, including a list of closest objects at each segment.
 
+    Parameters:
+        gaze_data (list): List of gaze entries with time, velocity, and objects.
+        start_time (float): Starting time of gaze tracking.
+        end_time (float): End time to stop processing data.
+        gaze_velocity_threshold (float): Maximum allowed gaze velocity to consider the gaze stable (default is 20.0).
+        angle_diff_threshold (float): The maximum allowed angle difference in 3D (default is 15.0 degrees).
+        angle_diff_xz_threshold (float): The maximum allowed angle difference in the vertical plane (default is 5.0 degrees).
+        excluded_objects (list): List of objects that should be ignored in the gaze history.
+        off_target_velocity_threshold (float): Gaze velocity threshold to determine off-target fixation (default is 5.0).
+        off_target_duration_threshold (float): Minimum duration to consider an off-target gaze (default is 0.5 seconds).
+        minimum_fixation_duration (float): Minimum duration to consider a gaze fixation (default is 0.08 seconds).
+    
+    Returns:
+        Tuple[list, list]: Filtered gaze history and updated object timestamps.
+    """
     # List to store gaze history and object timestamps
+    
     gaze_history = []
     objects_timestamps = []  
     
@@ -401,6 +420,20 @@ def compute_list_closest_objects_gaze_history(gaze_data, start_time, gaze_veloci
 
 
 def compute_multi_object_gaze_history(gaze_data, start_time, threshold_angle=60.0, max_average_angle_diff=45.0):
+    
+    """
+    Computes gaze history for multiple objects based on angle differences over time.
+
+    Parameters:
+        gaze_data (list): List of gaze entries with objects and angle differences.
+        start_time (float): Starting time for gaze tracking.
+        threshold_angle (float): Default angle assigned to missing objects.
+        max_average_angle_diff (float): Maximum average angle difference to include an object in the result.
+
+    Returns:
+        list: Gaze history with durations, main objects, and filtered angle differences.
+    """
+    
     gaze_history = []
     current_object = None
     current_segment_start = None
@@ -460,6 +493,16 @@ def compute_multi_object_gaze_history(gaze_data, start_time, threshold_angle=60.
 
 
 def filter_multi_object_gaze_history(gaze_history, excluded_objects):
+    """
+    Filters out specific objects from the gaze history.
+
+    Parameters:
+        gaze_history (list): List of gaze history entries with time spent and objects.
+        excluded_objects (list): List of object names to exclude.
+
+    Returns:
+        list: Filtered gaze history.
+    """
     filtered_gaze_history = []
 
     for entry in gaze_history:
@@ -481,6 +524,18 @@ def filter_multi_object_gaze_history(gaze_history, excluded_objects):
 
 
 def plot_angle_diff_over_time(gaze_data, start_time=0.0, end_time=None, angle_diff_mode='3D'):
+    """
+    Plots angle differences over time for objects in the gaze data.
+
+    Parameters:
+        gaze_data (list): Gaze data with angle differences for objects.
+        start_time (float): Start time for the plot.
+        end_time (Optional[float]): End time for the plot.
+        angle_diff_mode (str): Angle difference mode ('3D', 'XZ', 'XY').
+
+    Returns:
+        None
+    """
     # Extract all unique objects from gaze data
     unique_objects = set()
     # print(gaze_data)
@@ -534,6 +589,17 @@ def plot_angle_diff_over_time(gaze_data, start_time=0.0, end_time=None, angle_di
     plt.tight_layout()
 
 def plot_gaze_velocity_over_time(gaze_data, start_time=0, end_time=None):
+    """
+    Plots gaze velocity over time.
+
+    Parameters:
+        gaze_data (list): Gaze data with velocity and time information.
+        start_time (float): Start time for the plot.
+        end_time (float): End time for the plot.
+
+    Returns:
+        None
+    """
     # Loop through the gaze data and fill in time and angleDiff values for each object
     gaze_times = []
     gaze_velocities = []
@@ -557,6 +623,16 @@ def plot_gaze_velocity_over_time(gaze_data, start_time=0, end_time=None):
     plt.tight_layout()
     
 def plot_gaze_and_speech(gazed_objects_timestamps, words_data):
+    """
+    Plots gaze and speech data on separate subplots.
+
+    Parameters:
+        gazed_objects_timestamps (list): Timestamps of gazed objects.
+        words_data (list): Timestamps of spoken words.
+
+    Returns:
+        None
+    """
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)  # Two subplots, sharing the same x-axis
 
     # Extract unique objects for the y-axis
@@ -588,7 +664,19 @@ def plot_gaze_and_speech(gazed_objects_timestamps, words_data):
     plt.tight_layout()
     
 def plot_multi_gaze_and_speech(gazed_objects_timestamps, words_data, start_time_limit=None, end_time_limit=None):
+    """
+    Plots gaze data for multiple objects and speech data on the same timeline.
 
+    Parameters:
+        gazed_objects_timestamps (list): Timestamps for multiple gazed objects.
+        words_data (list): Timestamps of spoken words.
+        start_time_limit (float): Start time for the plot.
+        end_time_limit (float): End time for the plot.
+
+    Returns:
+        None
+    """
+    
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)  # Two subplots, sharing the same x-axis
 
     # print(gazed_objects_timestamps)
