@@ -41,7 +41,7 @@ You control a physical robot called 'the_robot' and receive requests from the us
 You have access to functions for gathering information, acting physically, and speaking out loud.
 You receive two types of inputs from the user:
     Speech input: The user will verbally ask for help.
-    Gaze history: This is divided into segments, each showing the objects the user likely focused on while uttering the speech input and the duration of that focused period (in seconds).
+    Gaze history: This is divided into segments, each showing the objects the user likely focused on while uttering the speech input and the duration of that focused period (in seconds). Some segments may include multiple objects ordered by decreasing likelihood (closer objects are mixed). 
 
 IMPORTANT: Obey the following rules:
 
@@ -67,7 +67,7 @@ TIPS FOR INTERPRETING GAZE:
 # You have access to functions for gathering information, acting physically, and speaking out loud.
 # You receive two types of inputs from the user:
 #     Speech input: The user will verbally ask for help.
-#     Gaze history: This is divided into segments, each showing the objects the user likely focused on while uttering the speech input and the duration of that focused period (in seconds). Some segments may include multiple objects ordered by decreasing likelihood (closer objects are mixed). 
+#     Gaze history: This is divided into segments, each showing the objects the user likely focused on while uttering the speech input and the duration of that focused period (in seconds).
 
 # IMPORTANT: Obey the following rules:
 
@@ -86,6 +86,8 @@ TIPS FOR INTERPRETING GAZE:
 # 3. Spurious fixations are usually short and mixed with closer objects
 
 # """
+
+
 
 
 # Agent capabilities
