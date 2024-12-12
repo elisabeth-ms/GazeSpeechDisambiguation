@@ -50,7 +50,7 @@ recordTransformationsEnabled = None
 
 
 main_dir = "/hri/localdisk/emende/interaction_recordings/users"
-input_mode = "ASYNC GAZE+SPEECH" # Options: "ASYNC GAZE+SPEECH+SCENE", "SYNC GAZE+SPEECH+SCENE", 
+input_mode = "ASYNC GAZE+SPEECH+SCENE" # Options: "ASYNC GAZE+SPEECH+SCENE", "SYNC GAZE+SPEECH+SCENE", 
                                        # "ASYNC GAZE+SPEECH", "SYNC GAZE+SPEECH", "SPEECH+SCENE", "GAZE+SCENE"
 scenario = "Breakfast"
 save_dir = "/hri/localdisk/emende/generated_dialogues"+"/Winner-Take-All/"+scenario
@@ -235,7 +235,7 @@ else:
     ws = wb["Generated Dialogues Scheme"]    
 
 # Define the users and interactions
-users = [1, 2, 3, 4, 5, 6]
+users = [1, 2, 3, 4, 5, 6, 7]
 
 # Generate all combinations of dialogues
 all_dialogues = list(product(users, repeat=3))
@@ -248,7 +248,7 @@ llm_handler = py_LLM_handler.LLMHandler(config_module=config_files_dict[input_mo
 SIM = llm_handler.get_simulation()
 SIM.run()
 
-update_users = [1,2,3,4,5,6]
+update_users = [1,2,3,4,5,6,7]
 
 
 for run, dialogue in enumerate(all_dialogues):
@@ -261,7 +261,7 @@ for run, dialogue in enumerate(all_dialogues):
 
         print(f"Row {row}, Column RUN, Raw Value: {cell_value}")
         
-        if cell_value != None:
+        if cell_value != None and dialogue[0]!=7 and dialogue[1]!=7 and dialogue[2]!=7:
             row += 1
             continue
         
@@ -448,7 +448,7 @@ for run, dialogue in enumerate(all_dialogues):
 
 
         row += 1
-    if row >= 100:
+    if row >= 700:
         break
     print("New dialogue show we reset the LLM handler")
     llm_handler.reset()

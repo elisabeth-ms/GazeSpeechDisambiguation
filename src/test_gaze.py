@@ -43,14 +43,13 @@ def main():
     SIM.speedUp = 1
     SIM.noLimits = False
     SIM.verbose = False
-    SIM.maxGazeAngleDiff = 120.0
-    SIM.xmlFileName = "g_example_breakfast_scenario.xml"
-    SIM.playTransformations = True
-    SIM.recordTransformations = True
-    SIM.init(True)
+    SIM.usersGazeComponentEnabled = True
+    SIM.addLandmarkZmq(camera_name="camera_0", withArucoTracking=True, withSkeletonTracking=True)
+    SIM.xmlFileName = "g_example_drink_scenario.xml"
+    # SIM.playTransformations = True
+    # SIM.recordTransformations = True
     SIM.addTTS("native")
-    camera_name = "camera_0" 
-    SIM.addLandmarkZmq()
+    SIM.init(True)
     SIM.run()
     
     gaze_manager = GazeDataManager(SIM=SIM)

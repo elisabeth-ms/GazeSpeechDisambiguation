@@ -71,14 +71,13 @@ SIMULATION.unittest = False
 SIMULATION.speedUp = 3
 SIMULATION.noLimits = False
 SIMULATION.verbose = False
-SIMULATION.maxGazeAngleDiff = 120.0
-SIMULATION.playTransformations = False
-SIMULATION.recordTransformations = recordTransformationsEnabled
+SIMULATION.usersGazeComponentEnabled = True
+# SIMULATION.playTransformations = False
+# SIMULATION.recordTransformations = recordTransformationsEnabled
 SIMULATION.xmlFileName = "g_example_breakfast_scenario.xml"
+SIMULATION.addLandmarkZmq(camera_name="camera_0", withArucoTracking=True, withSkeletonTracking=True)
+SIMULATION.addTTS("native")
 SIMULATION.init(True)
-SIMULATION.addTTS("piper")
-camera_name = "camera_0" 
-SIMULATION.addLandmarkZmq()
 
 # Tools
 ARG1 = True
