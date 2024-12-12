@@ -37,20 +37,21 @@ print_emojis = True
 speech_directory_path = None
 gpt_responses_path = None
 filtered_gaze_data_directory_path = None
-recordTransformationsEnabled = None
+sceneTransformationDataPlayerEnabled = None
+sceneTransformationDataRecorderEnabled = None
 
 
 input_mode = "gaze_history_speech" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
 config_file = "gpt_gaze_speech_scene_config"
 
-main_dir_path = '/hri/localdisk/emende/interaction_recordings/27_11_2024'
+main_dir_path = '/hri/localdisk/emende/interaction_recordings/'
 
 # Initialize dialogue and interaction counters
-dialogue_number = 2 # Adjust this based on which dialogue you want to load
+dialogue_number = 34 # Adjust this based on which dialogue you want to load
 interaction_number = 1  # Adjust this based on which interaction to start with
 
 
-main_dir = 'interaction_recordings/27_11_2024'
+main_dir = 'interaction_recordings/'
 main_dir_path = os.path.join('/hri/localdisk/emende', main_dir)
 excluded_objects = ['hand_left_robot', 'hand_right_robot']
 
@@ -77,7 +78,7 @@ time_taken = 0
 # Loop through dialogues and interactions, load pre-recorded data
 def run_offline_interactions(llm_handler, main_dir_path, dialogue_number, interaction_number, user_name="Elisabeth"):
     dialogue_folder_path = os.path.join(main_dir_path, f'dialogue{dialogue_number}')
-    
+    transformation_file = None
     # Loop through each interaction folder in the dialogue folder
     while True:
         interaction_folder_path = os.path.join(dialogue_folder_path, f'dialogue{dialogue_number}_{interaction_number}')
@@ -93,6 +94,10 @@ def run_offline_interactions(llm_handler, main_dir_path, dialogue_number, intera
         
         
         speech_data = load_speech_data(interaction_folder_path, user_name)
+        
+        if SIM.sceneTransformationDataPlayerEnabled:
+            print("Scene transformation data player is enabled.")
+            transformation_file = os.path.join(interaction_folder_path, 'transformations.json')
         
         # Extract relevant information from speech data
         speech_input = speech_data["transcript"]
@@ -134,7 +139,10 @@ def run_offline_interactions(llm_handler, main_dir_path, dialogue_number, intera
             print("Time taken so far: ", time_taken)
         else:
             print("Invalid input mode. Please select one of the following: 'speech_only', 'gaze_only', 'gaze_history_speech', 'synchronized_gaze_speech'")
-
+        if transformation_file:
+            print("Loading transformation data...")
+            SIM.load_transformation_data_from_file(transformation_file)
+            SIM.start_playback_transformation_data()
         # Move to the next interaction
         interaction_number += 1
         input("Press Enter to continue...")

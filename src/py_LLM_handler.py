@@ -36,7 +36,7 @@ class LLMHandler:
         self.SIM = SIM 
 
         global recordTransformationsEnabled
-        recordTransformationsEnabled = tool_module.recordTransformationsEnabled
+        recordTransformationsEnabled = tool_module.sceneTransformationDataRecorderEnabled
 
         # LLM settings
         if not os.path.isfile(os.getenv("OPENAI_API_KEY")):

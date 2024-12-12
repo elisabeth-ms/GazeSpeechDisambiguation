@@ -321,7 +321,7 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                     data_handler.save_speech_data(interaction_folder_path, person_name, gaze_start_time, getWallclockTime(), all_transcripts, all_word_data)
                    
                     global recordTransformationsEnabled
-                    # recordTransformationsEnabled = SIM.recordTransformations
+                    recordTransformationsEnabled = SIM.sceneTransformationDataRecorderEnabled
                     if recordTransformationsEnabled:
                         json_transformations = SIM.get_recorded_transformations(gaze_start_time, getWallclockTime())
                         data_handler.save_transformations_data_to_json(interaction_folder_path, 'transformations.json', json_transformations)

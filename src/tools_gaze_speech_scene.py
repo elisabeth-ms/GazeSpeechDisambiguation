@@ -59,7 +59,8 @@ from pyAffaction import (
     setLogLevel,
 )
 
-recordTransformationsEnabled = False
+sceneTransformationDataRecorderEnabled = False
+sceneTransformationDataPlayerEnabled = False
 addResourcePath(CFG_ROOT_DIR)
 addResourcePath(CFG_DIR)
 print(f"{CFG_DIR=}")
@@ -68,12 +69,12 @@ setLogLevel(-1)
 SIMULATION = LlmSim()
 SIMULATION.noTextGui = True
 SIMULATION.unittest = False
-SIMULATION.speedUp = 3
+SIMULATION.speedUp = 1
 SIMULATION.noLimits = False
 SIMULATION.verbose = False
 SIMULATION.usersGazeComponentEnabled = True
-# SIMULATION.playTransformations = False
-# SIMULATION.recordTransformations = recordTransformationsEnabled
+SIMULATION.sceneTransformationDataPlayerEnabled = sceneTransformationDataPlayerEnabled
+SIMULATION.sceneTransformationDataRecorderEnabled = sceneTransformationDataRecorderEnabled
 SIMULATION.xmlFileName = "g_example_breakfast_scenario.xml"
 SIMULATION.addLandmarkZmq(camera_name="camera_0", withArucoTracking=True, withSkeletonTracking=True)
 SIMULATION.addTTS("native")
