@@ -1,10 +1,9 @@
-# This script analyzes real-time gaze data to determine which object in the scene the user (user_name) is focusing on.
-# It uses thresholds for gaze velocity (gaze_velocity_threshold), angle differences (angle_diff_threshold and angle_diff_xz_threshold), 
-# and gaze duration (gaze_duration_threshold) to filter out unstable or unfocused gazes.
-# When the user's gaze remains on an object for a specified duration (gaze_duration_threshold), the object is announced via speech output.
-# Objects excluded (excluded_objects) from the analysis to avoid irrelevant detections.
-# The script continuously updates and speaks the name of the focused object as the user interacts with the scene.
-
+"""
+This script analyzes real-time gaze data to identify the object in the scene that the user is focusing on.
+It uses thresholds for gaze velocity, angle differences, and gaze duration to determine focus and excludes irrelevant objects.
+The script speaks the name of a random object in the scene and checks if the user focuses on the object for a sufficient duration.
+If the user correctly focuses on the announced object, it provides positive feedback.
+"""
 
 import sys
 import time
@@ -23,21 +22,72 @@ elif platform.system() == "Windows":
 from pyAffaction import *
 
 def speak(SIM, text):
+    """
+    Sends a command to the simulation to speak the provided text.
+
+    Parameters:
+        SIM (LlmSim): Simulation object to execute the speak command.
+        text (str): The text to be spoken by the simulation.
+
+    Returns:
+        None
+    """
+    
     SIM.execute(f"speak {text}")
 
 class GazeDataManager:
+    """
+    Manages gaze data retrieval from the simulation.
+
+    Methods:
+        get_raw_gaze_data: Retrieves raw gaze data for all users.
+    """
+    
     def __init__(self, SIM):
+        """
+        Initializes the GazeDataManager with a simulation instance.
+
+        Parameters:
+            SIM (LlmSim): Simulation object to interact with.
+        """
+        
         self.SIM = SIM
 
     def get_raw_gaze_data(self):
+        """
+        Retrieves raw gaze data for all users from the GazeComponent.
+
+        Returns:
+            list: Raw gaze data for all users.
+        """
+        
         return self.SIM.get_gaze_data()
 
 def save_to_json(data, filename="gaze_data.json"):
+    """
+    Saves the provided data to a JSON file.
+
+    Parameters:
+        data (dict): Data to be saved.
+        filename (str): Name of the file to save the data.
+
+    Returns:
+        None
+    """
     with open(filename, "w") as f:
         json.dump(data, f, indent=4)
 
-# Create a dialogue folder 
 def create_test_folder(main_dir_path, test_number):
+    """
+    Creates a test folder for storing data.
+
+    Parameters:
+        main_dir_path (str): Path to the main directory where test folders are created.
+        test_number (int): Test folder number.
+
+    Returns:
+        str: Path to the created test folder.
+    """
     test_folder = os.path.join(main_dir_path, f'test{test_number}')
     if not os.path.exists(test_folder):
         os.makedirs(test_folder)
@@ -50,6 +100,15 @@ random_object_timings = {}
 filtered_gaze_entries = []
 
 def main():
+    """
+    Main function to analyze real-time gaze data and provide feedback based on the user's focus.
+
+    Parameters:
+        None
+
+    Returns:
+        None
+    """
     # Set up the simulation 
     setLogLevel(-1)
     global SIM
@@ -61,7 +120,7 @@ def main():
     SIM.verbose = False
     SIM.usersGazeComponentEnabled = True
     SIM.addLandmarkZmq(camera_name="camera_0", withArucoTracking=True, withSkeletonTracking=True)
-    SIM.xmlFileName = "g_example_drink_scenario.xml"
+    SIM.xmlFileName = "g_example_drink_scenario.xml" # Change the file name to the desired scenario
     # SIM.playTransformations = True
     # SIM.recordTransformations = True
     SIM.addTTS("native")
@@ -73,6 +132,8 @@ def main():
     gaze_start_time = None
     current_object = None
     
+    
+    # Thresholds and parameters for gaze analysis
     gaze_velocity_threshold = 15
     angle_diff_threshold = 8 
     angle_diff_xz_threshold = 8
@@ -84,6 +145,7 @@ def main():
     user_name = "Elisabeth"
     
     
+    # Query the objects from the scene
     result = SIM.get_objects()
     if not result:
         return "No objects were observed."
@@ -91,7 +153,6 @@ def main():
     objects = [obj for obj in result["objects"] if obj not in excluded_objects]
     
     
-    # If there are multiple users, we just speak the object name for the user specified in user_name
     random_object = None
     next_object = True
     aux = None
@@ -99,7 +160,7 @@ def main():
     end_object_time = None
     test_number = 0
     test_folder_path = None
-    main_dir_path = "/hri/localdisk/emende/testGaze"
+    main_dir_path = "/hri/elisabeth/data/testGaze" # Change the path to the desired directory
     last_gazed_time = None
     while test_folder_path is None:
         test_number += 1
