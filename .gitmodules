@@ -1,4 +1,4 @@
-[submodule "src/src/AffAction"]
-	path = src/src/AffAction
+[submodule "src/AffAction"]
+	path = src/AffAction
 	url = https://github.com/HRI-EU/AffAction.git
 	branch = develop
