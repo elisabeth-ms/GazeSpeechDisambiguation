@@ -75,7 +75,7 @@ SIMULATION.verbose = False
 # SIMULATION.usersGazeComponentEnabled = True
 # SIMULATION.sceneTransformationDataPlayerEnabled = sceneTransformationDataPlayerEnabled
 # SIMULATION.sceneTransformationDataRecorderEnabled = sceneTransformationDataRecorderEnabled
-SIMULATION.xmlFileName = "g_example_breakfast_scenario.xml"
+SIMULATION.xmlFileName = "g_example_breakfast_scenario_tiago.xml"
 SIMULATION.addLandmarkZmq(camera_name="camera_0", withArucoTracking=True, withSkeletonTracking=True)
 SIMULATION.addTTS("native")
 SIMULATION.init(True)
