@@ -21,8 +21,8 @@ sim.unittest = False
 sim.speedUp = 1
 sim.noLimits = False
 sim.verbose = False
-sim.playTransformations = True
-sim.xmlFileName = "g_example_cola_orange_juice_two_glasses_bowl_ice.xml"
+# sim.playTransformations = True
+sim.xmlFileName = "g_example_breakfast_scenario.xml"
 sim.init(True)
 sim.run()
 
@@ -100,14 +100,16 @@ def json_to_words_data(speech_data):
 # Function to process gaze and speech data for a specific test
 def process_test_data(base_directory, test_number):
     # Find the test folder
-    test_folder = find_test_folder(base_directory, test_number)
-    if not test_folder:
-        return
+    # test_folder = find_test_folder(base_directory, test_number)
+    # if not test_folder:
+    #     return
+    test_folder ="/home/elisabeth/data/interaction_recordings/users/user5/Breakfast/Breakfast1"
+      
 
     # Define directories for gaze and speech data
-    test_gaze_folder = os.path.join(test_folder, 'gaze')
-    test_speech_folder = os.path.join(test_folder, 'speech')
-    test_transformations_folder = os.path.join(test_folder, 'transformations')
+    test_gaze_folder = os.path.join(test_folder, 'raw_gaze_data')
+    test_speech_folder = os.path.join(test_folder, 'speech_data')
+    # test_transformations_folder = os.path.join(test_folder, 'transformations')
 
     if not os.path.exists(test_gaze_folder) or not os.path.exists(test_speech_folder):
         print("Gaze or speech folder not found in the test folder.")
@@ -116,7 +118,7 @@ def process_test_data(base_directory, test_number):
     # Get all filenames in the gaze and speech folders
     gaze_folders = sorted(os.listdir(test_gaze_folder))
     speech_folders = sorted(os.listdir(test_speech_folder))
-    transformations_files = sorted(os.listdir(test_transformations_folder))
+    # transformations_files = sorted(os.listdir(test_transformations_folder))
 
     # Filter JSON files
     #gaze_files = [f for f in gaze_files if f.endswith('.json')]

@@ -34,8 +34,12 @@ import sys
 import yaml
 
 from pathlib import Path
-
-
+import extra_tools_tiago
+from action_tools_llm.msg import ObjectManipulationAction, ObjectManipulationGoal
+import actionlib
+import rospy
+from geometry_msgs.msg import Point
+from pal_interaction_msgs.msg import TtsGoal, TtsAction
 # System setup
 
 with open(Path(__file__).parent.resolve() / "config.yaml", "r") as config:
@@ -83,6 +87,17 @@ SIMULATION.init(True)
 # Tools
 ARG1 = True
 
+rospy.init_node('tools_tiago')
+
+client = actionlib.SimpleActionClient('object_manipulation', ObjectManipulationAction)
+        
+client.wait_for_server()
+
+client_tts = actionlib.SimpleActionClient('tts',TtsAction)
+
+## client_tts.wait_for_server()
+
+print("Both clients are ready!")
 
 def query_objects() -> str:
     """
@@ -124,7 +139,8 @@ def query_agents() -> str:
 #     distances_json = SIMULATION.get_pairwise_distances()
 
 #     if not distances_json:
-#         return "No objects were observed in the scene."
+#         return "No objects were observed in the scene."    rospy.init_node('test_object_manipulation_client')
+
 
 #     # Find close object pairs
 #     close_pairs = []
@@ -150,6 +166,7 @@ def query_agents() -> str:
 def speak(person_name: str, text: str) -> str:
     """
     You speak out the given text.
+    You provide a reason for the action you are about to take.
 
     :param person_name: The name of the person to speak to. The person must be available in the scene. Give "All" if you want to speak to everyone.
     :param text: The text to speak.
@@ -159,8 +176,28 @@ def speak(person_name: str, text: str) -> str:
     if person_name not in agents and person_name != "All":
         return f"There is no agent with the name {person_name} in the scene. Did you mean one of these: {agents}?"
 
-    SIMULATION.execute(f"speak {text}")
+
+
+    # SIMULATION.execute(f"speak {text}")
+    # 
+    
+    goal = TtsGoal()
+    goal.rawtext.text = text
+    goal.rawtext.lang_id = "en_GB"
+    
+    client_tts.send_goal(goal)
+    
+    # Waits for the server to finish performing the action
+    client_tts.wait_for_result()
+
+    # Prints out the result of executing the action
+    result = client_tts.get_result()
+    
     return f"You said to {person_name}: {text}"
+    
+
+    
+    
 
 def reasoning(reason: str) -> str:
     """
@@ -179,6 +216,98 @@ def required_objects(required_objects: str) -> str:
     """
     return f"The objects required by the user are: {required_objects}"
 
+
+
+def hand_object_over_to_person(object_name: str, person_name: str) -> str:
+    """
+    You get an object and hand it over to a person.
+
+    :param object_name: The name of the object to hand over. The object must be available in the scene.
+    :param person_name: The name of the person to hand over the object to. The person must be available in the scene.
+    :return: Result message.
+    """
+    
+    objects_names, objects_poses, objects_shapes = extra_tools_tiago.get_objects_names_shapes_and_poses(SIMULATION)
+    
+    goal = ObjectManipulationGoal()
+    
+    goal.task = "hand_over_to_person"
+    goal.object_for_task_name1 = object_name
+    goal.object_for_task_name2 = person_name
+    goal.object_names = objects_names
+    goal.object_poses = objects_poses
+    goal.object_shapes = objects_shapes
+    
+    goal.zone_place = []
+    p1 = Point()
+    p1.x = -0.5
+    p1.y = -0.3
+    p1.z = 0.85
+    goal.zone_place.append(p1)
+
+    p2 = Point()
+    p2.x = 0.5
+    p2.y = -0.3
+    p2.z = 0.85
+    goal.zone_place.append(p2)
+
+    p3 = Point()
+    p3.x = 0.5
+    p3.y = 0.3
+    p3.z = 0.85
+    goal.zone_place.append(p3)
+
+    p4 = Point()
+    p4.x = -0.5
+    p4.y = 0.3
+    p4.z = 0.85
+        
+    
+    goal.zone_place.append(p4)
+            
+    client.send_goal(goal)
+    
+    # Waits for the server to finish performing the action
+    client.wait_for_result()
+
+    # Prints out the result of executing the action
+    result = client.get_result()
+    if result.success:
+        return f"You moved {object_name} to {person_name}."
+      
+    return f"You were not able to hand {object_name} over to {person_name}."
+
+def pour_into(source_container_name: str, target_container_name: str) -> str:
+    """
+    You get a source container, pour it into a target container, and put it back on the table.
+
+    :param source_container_name: The name of the container to pour from.
+    :param target_container_name: The name of the container to pour into.
+    :return: Result message.
+    """
+    
+    objects_names, objects_poses, objects_shapes = extra_tools_tiago.get_objects_names_shapes_and_poses(SIMULATION)
+    
+    goal = ObjectManipulationGoal()
+    
+    goal.task = "pour_into"
+    goal.object_for_task_name1 = source_container_name
+    goal.object_for_task_name2 = target_container_name
+    goal.object_names = objects_names
+    goal.object_poses = objects_poses
+    goal.object_shapes = objects_shapes
+    
+    goal.zone_place = []
+    
+    client.send_goal(goal)
+    
+    client.wait_for_result()
+    result = client.get_result()
+
+
+    if result.success:
+        return f"You poured {source_container_name} into {target_container_name}."
+    return f"You were not able to pour {source_container_name} into {target_container_name}."
 
 # def is_person_busy_or_idle(person_name: str) -> str:
 #     """
@@ -241,7 +370,7 @@ def required_objects(required_objects: str) -> str:
 #     :param object_name: The name of the object to check. The object must be available in the scene.
 #     :return: Result message.
 #     """
-#     objects = SIMULATION.get_objects()["objects"]
+#     objects = SIMULATION.get_objects()["obhttps://www.google.com/search?q=ttsaction+tiago&client=ubuntu-sn&sca_esv=342fb0b783af65fb&channel=fs&udm=2&biw=1415&bih=742&ei=v6igZ5bkAYnhkdUPpenMqQg&ved=0ahUKEwjWv_O2s6eLAxWJcKQEHaU0M4UQ4dUDCBI&uact=5&oq=ttsaction+tiago&gs_lp=EgNpbWciD3R0c2FjdGlvbiB0aWFnb0iQFVCkA1ipE3ABeACQAQCYAWCgAZMDqgEBNrgBA8gBAPgBAZgCAKACAJgDAIgGAZIHAKAHjgI&sclient=imgjects"]
 #     if object_name not in objects:
 #         return f"There is no object with the name {object_name} in the scene. Did you mean one of these: {objects}?"
 
@@ -322,7 +451,7 @@ def required_objects(required_objects: str) -> str:
 #         res = SIMULATION.plan_fb(
 #             (
 #                 f"get {object_name} duration 8;"
-#                 f"put {object_name};"
+#                 f"put {object_name};
 #                 f"get {object_name} duration 8;"
 #                 f"pass {object_name} {person_name};"
 #                 "pose default duration 4"

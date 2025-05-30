@@ -43,9 +43,9 @@ def main():
     SIM.speedUp = 1
     SIM.noLimits = False
     SIM.verbose = False
-    SIM.usersGazeComponentEnabled = True
+    # SIM.usersGazeComponentEnabled = True
     SIM.addLandmarkZmq(camera_name="camera_0", withArucoTracking=True, withSkeletonTracking=True)
-    SIM.xmlFileName = "g_example_drink_scenario.xml"
+    SIM.xmlFileName = "g_example_breakfast_scenario.xml"
     # SIM.playTransformations = True
     # SIM.recordTransformations = True
     SIM.addTTS("native")

@@ -1,8 +1,0 @@
-[submodule "src/AffAction"]
-	path = src/AffAction
-	url = https://github.com/HRI-EU/AffAction.git
-	branch = develop
-[submodule "src/Smile"]
-	path = src/Smile
-	url = https://github.com/HRI-EU/SmileWorkspace.git
-	branch = master

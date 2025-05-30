@@ -44,16 +44,16 @@ sceneTransformationDataRecorderEnabled = None
 input_mode = "gaze_history_speech" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
 config_file = "gpt_gaze_speech_scene_config"
 
-main_dir_path = '/hri/localdisk/emende/interaction_recordings/'
+main_dir_path = '/home/elisabeth/data/interaction_recordings/'
 
 # Initialize dialogue and interaction counters
-dialogue_number = 34 # Adjust this based on which dialogue you want to load
+dialogue_number = 1 # Adjust this based on which dialogue you want to load
 interaction_number = 1  # Adjust this based on which interaction to start with
 
 
 main_dir = 'interaction_recordings/'
-main_dir_path = os.path.join('/hri/localdisk/emende', main_dir)
-excluded_objects = ['hand_left_robot', 'hand_right_robot']
+main_dir_path = os.path.join('/home/elisabeth/data', main_dir)
+excluded_objects = ['Hand_left_Elisabeth', 'Hand_right_Elisabeth']
 
 
 
@@ -103,12 +103,32 @@ def run_offline_interactions(llm_handler, main_dir_path, dialogue_number, intera
         speech_input = speech_data["transcript"]
         start_time = speech_data["listening_start_time"]
 
-        gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], start_time, 15.0,8.0, 8.0, excluded_objects, 5.0, 0.5, 0.04)
+        gaze_history, objects_timestamps = pyGaze.compute_list_closest_objects_gaze_history(user_raw_gaze_data["gaze_data"], start_time, 15.0,8.0, 8.0, excluded_objects, 5.0, 0.5, 0.08)
 
         start_time = speech_data['listening_start_time']
         word_data = [(word_info['word'], word_info['start_time'], word_info['end_time']) for word_info in speech_data['words']]
         global time_taken
-        pyGaze.plot_multi_gaze_and_speech(objects_timestamps, word_data)
+        
+        print(objects_timestamps)
+        new_objects_timestamps = []
+        for segment in objects_timestamps:
+            if segment[1]>3.0 and segment[2]<8.2:
+              new_objects_timestamps.append(segment)
+            print(segment[0])
+            print(segment[1])
+            print(segment[2])
+        
+        print("-----------------------------------------------")
+
+        print(new_objects_timestamps)
+        print("-----------------------------------------------")
+
+        new_word_data = []
+        for i, word in enumerate(word_data):
+            if i>1:
+              new_word_data.append((word[0], word[1]+1, word[2]+1))
+        print(new_word_data)
+        pyGaze.plot_multi_gaze_and_speech(new_objects_timestamps, new_word_data)
         # pyGaze.plot_angle_diff_over_time(user_raw_gaze_data["gaze_data"], start_time, start_time+10.0, '3D')
         
         plt.show()

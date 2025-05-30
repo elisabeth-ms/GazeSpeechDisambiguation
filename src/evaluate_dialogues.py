@@ -24,12 +24,12 @@ class MissingEnvironmentVariable(Exception):
 
 
 
-input_mode = "ASYNC GAZE+SPEECH" # Options: "ASYNC GAZE+SPEECH+SCENE", "SYNC GAZE+SPEECH+SCENE", 
+input_mode = "ASYNC GAZE+SPEECH+SCENE" # Options: "ASYNC GAZE+SPEECH+SCENE", "SYNC GAZE+SPEECH+SCENE", 
                                        # "ASYNC GAZE+SPEECH", "SYNC GAZE+SPEECH", "SPEECH+SCENE", "GAZE+SCENE"
-scenario = "Breakfast"
-data_dir = "/hri/localdisk/emende/generated_dialogues"+"/"+"Winner-Take-All"+"/"+scenario
+scenario = "Drink"
+data_dir = "/home/elisabeth/data/generated_dialogues"+"/"+"/"+scenario
 
-data_file = input_mode+"_"+scenario+"_winner"+".xlsx"
+data_file = input_mode+"_"+scenario+".xlsx"
 data_file_path = os.path.join(data_dir,data_file)
 
 
@@ -112,6 +112,8 @@ if os.path.exists(data_file_path):
                 number_interactions_breakfast[1] += 1         
                 if "bottle_of_milk" in required_objects_list and "bottle_of_orange_juice" not in required_objects_list:
                     correct_interactions_breakfast[1] += 1
+                else:
+                  print(row)
                 
             if ws[f"{columns['INTERACTION']}{row}"].value == 3:
                 number_interactions_breakfast[2] += 1         
@@ -122,8 +124,9 @@ if os.path.exists(data_file_path):
                 number_interactions_drink[0] += 1 
                 
                 if any(obj == "bottle_of_cola" for obj in required_objects_list) and not any(obj == "bottle_of_cola_zero" for obj in required_objects_list):        
-                    print(required_objects_list)
                     correct_interactions_drink[0] += 1
+                else:
+                    print(row)
                     
             elif ws[f"{columns['INTERACTION']}{row}"].value == 2:
                 number_interactions_drink[1] += 1         
@@ -138,9 +141,18 @@ if os.path.exists(data_file_path):
 if scenario == 'Breakfast':
     print(number_interactions_breakfast) 
     print(correct_interactions_breakfast)
+    print("Task1: ", correct_interactions_breakfast[0]/number_interactions_breakfast[0]*100.0)
+    print("Task2: ", correct_interactions_breakfast[1]/number_interactions_breakfast[1]*100.0)
+    print("Task3: ", correct_interactions_breakfast[2]/number_interactions_breakfast[2]*100.0)
+
+
 if scenario == 'Drink':
     print(number_interactions_drink)
     print(correct_interactions_drink)
+    print("Task1: ", correct_interactions_drink[0]/number_interactions_drink[0]*100.0)
+    print("Task2: ", correct_interactions_drink[1]/number_interactions_drink[1]*100.0)
+    print("Task3: ", correct_interactions_drink[2]/number_interactions_drink[2]*100.0)
+
 
 
 

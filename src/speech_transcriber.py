@@ -20,7 +20,8 @@ class MicrophoneStream:
         self.inactivity_timeout = innactivity_timeout
         self.last_activity_time = time.time()
         self.speech_detected = False  # Track whether any speech was detected
-
+        self.devices = sd.query_devices()
+        print(self.devices)
         # Load hints if any
         if hints_filename:
             if not os.path.isfile(hints_filename):
@@ -39,10 +40,12 @@ class MicrophoneStream:
 
     def start_streaming(self):
         self.running = True
+        device_index = 9
         self.stream = sd.InputStream(
             samplerate=self.rate,
             channels=1,
             dtype='int16',
+            device=device_index,
             callback=self.audio_callback,
             blocksize=self.chunk_size,
         )

@@ -283,59 +283,8 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
                 SIM.execute(f"speak I'm listening...")
                 time.sleep(0.4)
 
-                state_string = SIM.get_state()
-                state_json = json.loads(state_string)
-                msg_objects = ArucoObjectArray()
-                
+               
 
-                
-                entities = state_json["entities"]
-                print(entities)
-                for entity in entities:
-                    print(entity)
-                    if entity["instance_id"] not in ["table", "camera_0"]:
-                        msg_object = ArucoObject()
-                        msg_object.name = entity["instance_id"]
-                        pose_msg = Pose()
-                        print(entity["position"])
-                        pose_msg.position.x = entity["position"][0]
-                        pose_msg.position.y = entity["position"][1]
-                        pose_msg.position.z = entity["position"][2]
-                        position = entity["position"]
-                        euler_xyz = entity["euler_xyzr"]
-                        quaternion = tf.transformations.quaternion_from_euler(entity["euler_xyzr"][0], entity["euler_xyzr"][1], entity["euler_xyzr"][2])
-                        print(quaternion)
-                        pose_msg.orientation.x = quaternion[0]
-                        pose_msg.orientation.y = quaternion[1]
-                        pose_msg.orientation.z = quaternion[2]
-                        pose_msg.orientation.w = quaternion[3]
-                        msg_object.pose = pose_msg
-
-
-                        
-                        primitive = SolidPrimitive()
-                        if entity['collision_shapes']:
-                          print("Count collision shapes: ", len(entity['collision_shapes']))
-                          if entity['collision_shapes'][0]['type'] == "RCSSHAPE_SSL":
-                              primitive.type = SolidPrimitive.CYLINDER
-                              print("extents: ", entity['collision_shapes'][0]['extents'])
-                              primitive.dimensions = [entity['collision_shapes'][0]['extents'][0], entity['collision_shapes'][0]['extents'][2]] 
-                              msg_object.shape = primitive
-                          if entity['collision_shapes'][0]['type'] == "RCSSHAPE_BOX":
-                              primitive.type = SolidPrimitive.BOX
-                              primitive.dimensions = [entity['collision_shapes'][0]['extents'][0],entity['collision_shapes'][0]['extents'][1], entity['collision_shapes'][0]['extents'][2]]
-                              msg_object.shape = primitive
-                          if entity['collision_shapes'][0]['type'] == "RCSSHAPE_CYLINDER":
-                              primitive.type = SolidPrimitive.CYLINDER
-                              primitive.dimensions = [entity['collision_shapes'][0]['extents'][0], entity['collision_shapes'][0]['extents'][2]]
-                              msg_object.shape = primitive
-                          
-
-                        affordances = SIM.getAffordanceFrame(entity["instance_id"], AffordanceType.Affordance)
-                        print(affordances)
-                        msg_objects.objects.append(msg_object)
-                
-                pub_objects.publish(msg_objects)
 
                 print("\nStarting streaming...")
                 gaze_start_time = getWallclockTime()
@@ -446,6 +395,7 @@ def key_listener(llm_handler,stream, gaze_manager, transcription_queue, plot_spe
 rospy.init_node('gaze_speech_agent_tiago', anonymous=True)
 input_mode = "gaze_only" # Options: "speech_only", "gaze_only", "gaze_history_speech", "synchronized_gaze_speech"
 config_file = "gpt_gaze_speech_scene_config"
+# rospy.init_node('gaze_speech_agent_tiago', anonymous=True)
 
 SIM = None
 speech_directory_path = None

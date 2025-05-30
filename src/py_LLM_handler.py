@@ -11,7 +11,7 @@ from typing import (
     Optional,
 )
 
-sys.path.append(os.path.abspath("/hri/localdisk/emende/AttentiveSupport/src"))
+# sys.path.append(os.path.abspath("/hri/localdisk/emende/AttentiveSupport/src"))
 from function_analyzer import FunctionAnalyzer
 
 class LLMHandler:
@@ -35,8 +35,8 @@ class LLMHandler:
         
         self.SIM = SIM 
 
-        global recordTransformationsEnabled
-        recordTransformationsEnabled = tool_module.sceneTransformationDataRecorderEnabled
+        # global recordTransformationsEnabled
+        # recordTransformationsEnabled = tool_module.sceneTransformationDataRecorderEnabled
 
         # LLM settings
         if not os.path.isfile(os.getenv("OPENAI_API_KEY")):
@@ -114,7 +114,7 @@ class LLMHandler:
                 raise Exception(f"❌ {retries} OpenAI errors, aborting.")
                 # Get the number of tokens used
         token_usage = response.usage.total_tokens
-        print(f"Total tokens used in this call: {token_usage}")
+        # print(f"Total tokens used in this call: {token_usage}")
         return response    
     
 

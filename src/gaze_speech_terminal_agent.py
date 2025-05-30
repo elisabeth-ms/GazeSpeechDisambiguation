@@ -103,7 +103,7 @@ def create_interaction_folder(dialogue_dir_path,dialogue_number, interaction_num
     
 
 class LLMHandler:
-    def __init__(self, config_module: str = "gpt_gaze_speech_config"):
+    def __init__(self, config_module: str = "gpt_gaze_speech_scene_config"):
         # Dynamic config loading
         config = importlib.import_module(config_module)
         tool_module = importlib.import_module(config.tool_module)
@@ -113,8 +113,8 @@ class LLMHandler:
         global SIM
         SIM = tool_module.SIMULATION
         
-        global recordTransformationsEnabled
-        recordTransformationsEnabled = tool_module.recordTransformationsEnabled
+        # global recordTransformationsEnabled
+        # recordTransformationsEnabled = tool_module.recordTransformationsEnabled
 
         # LLM settings
         if not os.path.isfile(os.getenv("OPENAI_API_KEY")):
@@ -125,7 +125,7 @@ class LLMHandler:
         self.temperature = config.temperature
 
         # Character
-        self.name = "Johnnie"
+        self.name = "Tiago"
         self.character: str = config.system_prompt.format(name=self.name)
         self.function_resolver = tools
         self.function_analyzer = FunctionAnalyzer()
@@ -172,7 +172,7 @@ class LLMHandler:
                 raise Exception(f"❌ {retries} OpenAI errors, aborting.")
                 # Get the number of tokens used
         token_usage = response.usage.total_tokens
-        print(f"Total tokens used in this call: {token_usage}")
+        # print(f"Total tokens used in this call: {token_usage}")
         return response    
     
 
@@ -260,7 +260,7 @@ class LLMHandler:
         response = self._query_llm(self.messages)
         message = response.choices[0].message
         self.messages.append(response.choices[0].message)
-        print(self.messages)
+        # print(self.messages)
         return self.messages
 
 
@@ -339,7 +339,7 @@ def main():
 
     print_emojis = True
     person_name = "Elisabeth"
-    llm_handler = LLMHandler(config_module="gpt_gaze_speech_scene_config")
+    llm_handler = LLMHandler(config_module="gpt_gaze_speech_scene_tiago_config")
     global SIM
 
     SIM.run()
@@ -365,7 +365,7 @@ def main():
                 llm_handler.play_with_functions(speech_input=speech_input, gaze_history=gaze_input, person_name=person_name)
                 response = llm_handler.get_response()
                 # Save interaction data (speech input, gaze input, and GPT responses)
-                print("response: ", response)
+                # print("response: ", response)
 
             
 

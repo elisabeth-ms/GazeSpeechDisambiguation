@@ -96,6 +96,7 @@ class MicrophoneStream:
             samplerate=self.rate,
             channels=1,
             dtype='int16',
+            device=9,
             callback=self.audio_callback,
             blocksize=self.chunk_size,
         )
