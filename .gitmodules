@@ -1,0 +1,4 @@
+[submodule "src/AttentiveSupport"]
+	path = src/AttentiveSupport
+	url = https://github.com/HRI-EU/AttentiveSupport.git
+	branch = main
