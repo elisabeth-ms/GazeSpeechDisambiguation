@@ -20,7 +20,7 @@ import logging
 import inspect
 
 
-sys.path.append(os.path.abspath("/hri/localdisk/emende/AttentiveSupport/src"))
+sys.path.append("../src/AttentiveSupport/src/")
 from function_analyzer import FunctionAnalyzer
 
 from typing import (
@@ -37,7 +37,7 @@ elif platform.system() == "Windows":
     sys.path.append("bin")
 
 from pyAffaction import *
-sys.path.append(os.path.abspath("/hri/localdisk/emende/AttentiveSupport/src/Smile/src/AffAction/python"))
+sys.path.append("../src/AttentiveSupport/src/")
 import pyGaze
 
 class MissingEnvironmentVariable(Exception):
