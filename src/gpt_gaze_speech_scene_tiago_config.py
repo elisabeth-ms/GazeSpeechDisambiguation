@@ -86,4 +86,4 @@ TIPS FOR INTERPRETING GAZE:
 
 
 # Agent capabilities
-tool_module = "tools_gaze_speech_scene_tiago_test"
+tool_module = "tools_gaze_speech_scene_tiago"
